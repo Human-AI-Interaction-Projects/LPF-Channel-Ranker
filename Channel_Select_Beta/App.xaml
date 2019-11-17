@@ -1,0 +1,7 @@
+﻿<Application
+    x:Class="Channel_Select_Beta.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Channel_Select_Beta">
+
+</Application>
