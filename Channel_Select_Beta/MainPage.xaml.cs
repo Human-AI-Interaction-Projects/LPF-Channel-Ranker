@@ -134,7 +134,7 @@ namespace Channel_Select_Beta
             int i = 0;
             i = 0;
             Read_Data_In = new List<List<double>>();
-            while (i < Total_Channel)
+            while (i < Total_Channel+2)
             {
                 scrollpolyline.Add(new Polyline()
                 {
@@ -147,6 +147,7 @@ namespace Channel_Select_Beta
                 i++;
             }
         }
+        private List<double> Test_P = new List<double>();
         private async void Run_Cont()
         {
             int i = 0;
@@ -168,7 +169,7 @@ namespace Channel_Select_Beta
                 i++;
             }
             i = 0;
-            while (i < Read_Data_In.Count)
+            while (i < Total_Channel)
             {
 
                 ii = 0;
@@ -209,7 +210,7 @@ namespace Channel_Select_Beta
 
             mysViewer.Content = myPanel;
             i = 0;
-            while (i < Read_Data_In.Count)
+            while (i < Total_Channel)
             {
                 Poco[i].Add(Poco[i][Poco[i].Count - 1]);
                 Poco[i].RemoveAt(0);
@@ -238,12 +239,17 @@ namespace Channel_Select_Beta
                 ib = basev;
                 if(Streaming_Flag)
                 {
-                    while (i < Read_Data_In.Count)
+                    Test_P = new List<double>();
+                    while (i < Total_Channel)
                     {
 
                         ii = 0;
                         while (ii < Read_Data_In[i].Count)
                         {
+                            if(i==0)
+                            {
+                                Test_P.Add(Read_Data_In[7][ib]);
+                            }
                             x = (double)ii * 800 / Read_Data_In[i].Count - 400;
                             y = 100 - (Read_Data_In[(int)Rank_Index[i]][ib] + 100) / (700 - (-100)) * 100;
                             Poco[i].Add(new Point(x, y));
@@ -259,7 +265,7 @@ namespace Channel_Select_Beta
 
                     }
                     i = 0;
-                    while (i < Read_Data_In.Count)
+                    while (i < Total_Channel)
                     {
 
                         scrollpolyline[i].Points = Poco[i];
@@ -273,6 +279,9 @@ namespace Channel_Select_Beta
                         Poco.Add(new PointCollection());
                         i++;
                     }
+
+                    myplotter1.Input_Data_Point = new List<double>(Test_P);
+                    myplotter1.Create_Plot(Plotter_max, Plotter_min);
                 }
                 await Task.Delay(11);
                 basev += 1;
@@ -433,20 +442,11 @@ namespace Channel_Select_Beta
             Check_Date();
             Tab_Decolor();
             Feature_UI_Hide();
+            Magnitude_Feature_Show();
+            Magnitude_bt.BorderThickness = new Thickness(5,5,5,5);
             //Band_Selection_Show();
-            Frequency_Band_bt.BorderThickness = new Thickness(5, 5, 5, 5);
+            //Frequency_Band_bt.BorderThickness = new Thickness(5, 5, 5, 5);
             Run_Cont();
-            Info_Cal(Read_Data_In[2], new List<double>() { 1, 1, 1, 1, 1 }); // data, filter, thres
-
-
-            myplotter1.Add_Plot(Plotter_max, Plotter_min, Read_Data_In[2], Light_blue_brush);
-            //myplotter1.Add_Plot(Plotter_max, Plotter_min, Denoise_Signal, green_bright_button_brush);
-            //myplotter1.Add_Zcross(Zero_Crossing, Read_Data_In[2].Count, Sky_blue_color);
-            Notice_tb.Text = Zero_Crossing.Count.ToString();
-            Notice_tb.Text += Threshold_sd.Value.ToString();
-            //myplotter1.Add_Point(Plotter_max, Plotter_min, Read_Data_In[2], new List<int>() { maxi } ,Violet_Red); 
-            //myplotter1.Add_Point(Plotter_max, Plotter_min, Read_Data_In[2], new List<int>() { mini }, Dodge_blue_brush);
-            myplotter1.Add_PolyGon(Plotter_max, Plotter_min, Zero_Crossing[0], Zero_Crossing[1], Read_Data_In[2], Teal_color) ;
         }
         #region Pre-defined configuration
         private TextBlock Predefined_tb = new TextBlock();
@@ -1583,12 +1583,15 @@ namespace Channel_Select_Beta
         private Slider SNR_sd_act = new Slider();
         private TextBlock SNR_tb_act = new TextBlock();
 
-        private Button Thres_Avg_bt = new Button();
-        private TextBlock Thres_Avg_tb1 = new TextBlock();
-        private TextBlock Thres_Avg_tb2 = new TextBlock();
-        private Button Thres_Avg_bt_act = new Button();
-        private Slider Thres_Avg_sd_act = new Slider();
-        private TextBlock Thres_Avg_tb_act = new TextBlock();
+        private Button Spike_Activity_bt = new Button();
+        private TextBlock Spike_Activity_tb1 = new TextBlock();
+        private TextBlock Spike_Activity_tb2 = new TextBlock();
+        private Button Spike_Activity_bt_act = new Button();
+        private Slider Spike_Activity_sd_act = new Slider();
+        private TextBlock Spike_Activity_tb_act = new TextBlock();
+
+        private Button Reference_bt = new Button();
+        private Button Targe_bt = new Button();
         private void Magnitude_Feature_Setup()
         {
             #region Max Amp
@@ -2009,9 +2012,47 @@ namespace Channel_Select_Beta
 
             #endregion
             #region Thres_Avg
-            Thres_Avg_bt = new Button()
+            Targe_bt = new Button()
             {
-                Content = "Approx Threshold",
+                Content = "Target",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Foreground = Light_blue_brush,
+                Background = Default_back_black_color_brush,
+                VerticalContentAlignment = VerticalAlignment.Top,
+                FontSize = 20,
+                FontWeight = FontWeights.ExtraBold,
+                BorderBrush = Light_blue_brush,
+                BorderThickness = new Thickness(3,3,3,3)
+            };
+            MainGrid.Children.Add(Targe_bt);
+            Targe_bt.SetValue(Grid.ColumnProperty, 64);
+            Targe_bt.SetValue(Grid.ColumnSpanProperty, 8);
+            Targe_bt.SetValue(Grid.RowProperty, 35);
+            Targe_bt.SetValue(Grid.RowSpanProperty, 3);
+
+            Reference_bt = new Button()
+            {
+                Content = "Reference",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Foreground = Light_blue_brush,
+                Background = Default_back_black_color_brush,
+                VerticalContentAlignment = VerticalAlignment.Top,
+                FontSize = 20,
+                FontWeight = FontWeights.ExtraBold,
+                BorderBrush = Light_blue_brush,
+                BorderThickness = new Thickness(3, 3, 3, 3)
+            };
+            MainGrid.Children.Add(Reference_bt);
+            Reference_bt.SetValue(Grid.ColumnProperty, 55);
+            Reference_bt.SetValue(Grid.ColumnSpanProperty, 8);
+            Reference_bt.SetValue(Grid.RowProperty, 35);
+            Reference_bt.SetValue(Grid.RowSpanProperty, 3);
+
+            Spike_Activity_bt = new Button()
+            {
+                Content = "Spike Activity",
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
                 Foreground = white_button_brush,
@@ -2020,13 +2061,13 @@ namespace Channel_Select_Beta
                 FontSize = 20,
                 FontWeight = FontWeights.ExtraBold
             };
-            MainGrid.Children.Add(Thres_Avg_bt);
-            Thres_Avg_bt.SetValue(Grid.ColumnProperty, 44);
-            Thres_Avg_bt.SetValue(Grid.ColumnSpanProperty, 10);
-            Thres_Avg_bt.SetValue(Grid.RowProperty, 55);
-            Thres_Avg_bt.SetValue(Grid.RowSpanProperty, 3);
+            MainGrid.Children.Add(Spike_Activity_bt);
+            Spike_Activity_bt.SetValue(Grid.ColumnProperty, 44);
+            Spike_Activity_bt.SetValue(Grid.ColumnSpanProperty, 10);
+            Spike_Activity_bt.SetValue(Grid.RowProperty, 55);
+            Spike_Activity_bt.SetValue(Grid.RowSpanProperty, 3);
 
-            Thres_Avg_tb1 = new TextBlock()
+            Spike_Activity_tb1 = new TextBlock()
             {
                 VerticalAlignment = VerticalAlignment.Stretch,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -2036,13 +2077,13 @@ namespace Channel_Select_Beta
                 Text = "Thres_Avg",
                 FontSize = 20
             };
-            MainGrid.Children.Add(Thres_Avg_tb1);
-            Thres_Avg_tb1.SetValue(Grid.ColumnProperty, 55);
-            Thres_Avg_tb1.SetValue(Grid.ColumnSpanProperty, 8);
-            Thres_Avg_tb1.SetValue(Grid.RowProperty, 55);
-            Thres_Avg_tb1.SetValue(Grid.RowSpanProperty, 3);
+            MainGrid.Children.Add(Spike_Activity_tb1);
+            Spike_Activity_tb1.SetValue(Grid.ColumnProperty, 55);
+            Spike_Activity_tb1.SetValue(Grid.ColumnSpanProperty, 8);
+            Spike_Activity_tb1.SetValue(Grid.RowProperty, 55);
+            Spike_Activity_tb1.SetValue(Grid.RowSpanProperty, 3);
 
-            Thres_Avg_tb2 = new TextBlock()
+            Spike_Activity_tb2 = new TextBlock()
             {
                 VerticalAlignment = VerticalAlignment.Stretch,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -2052,13 +2093,13 @@ namespace Channel_Select_Beta
                 Text = "Thres_Avg",
                 FontSize = 20
             };
-            MainGrid.Children.Add(Thres_Avg_tb2);
-            Thres_Avg_tb2.SetValue(Grid.ColumnProperty, 64);
-            Thres_Avg_tb2.SetValue(Grid.ColumnSpanProperty, 8);
-            Thres_Avg_tb2.SetValue(Grid.RowProperty, 55);
-            Thres_Avg_tb2.SetValue(Grid.RowSpanProperty, 3);
+            MainGrid.Children.Add(Spike_Activity_tb2);
+            Spike_Activity_tb2.SetValue(Grid.ColumnProperty, 64);
+            Spike_Activity_tb2.SetValue(Grid.ColumnSpanProperty, 8);
+            Spike_Activity_tb2.SetValue(Grid.RowProperty, 55);
+            Spike_Activity_tb2.SetValue(Grid.RowSpanProperty, 3);
 
-            Thres_Avg_bt_act = new Button()
+            Spike_Activity_bt_act = new Button()
             {
                 Content = "Deactivated",
                 HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -2070,14 +2111,14 @@ namespace Channel_Select_Beta
                 BorderThickness = new Thickness(2, 2, 2, 2),
                 BorderBrush = red_bright_button_brush
             };
-            MainGrid.Children.Add(Thres_Avg_bt_act);
-            Thres_Avg_bt_act.SetValue(Grid.ColumnProperty, 76);
-            Thres_Avg_bt_act.SetValue(Grid.ColumnSpanProperty, 4);
-            Thres_Avg_bt_act.SetValue(Grid.RowProperty, 55);
-            Thres_Avg_bt_act.SetValue(Grid.RowSpanProperty, 3);
-            Thres_Avg_bt_act.Click += Thres_Avg_bt_act_Click;
+            MainGrid.Children.Add(Spike_Activity_bt_act);
+            Spike_Activity_bt_act.SetValue(Grid.ColumnProperty, 76);
+            Spike_Activity_bt_act.SetValue(Grid.ColumnSpanProperty, 4);
+            Spike_Activity_bt_act.SetValue(Grid.RowProperty, 55);
+            Spike_Activity_bt_act.SetValue(Grid.RowSpanProperty, 3);
+            Spike_Activity_bt_act.Click += Spike_Activity_bt_act_Click;
 
-            Thres_Avg_sd_act = new Slider()
+            Spike_Activity_sd_act = new Slider()
             {
                 Maximum = 1,
                 Minimum = 0,
@@ -2089,14 +2130,14 @@ namespace Channel_Select_Beta
                 FontSize = 12,
                 Value = 0
             };
-            MainGrid.Children.Add(Thres_Avg_sd_act);
-            Thres_Avg_sd_act.SetValue(Grid.ColumnProperty, 81);
-            Thres_Avg_sd_act.SetValue(Grid.ColumnSpanProperty, 12);
-            Thres_Avg_sd_act.SetValue(Grid.RowProperty, 55);
-            Thres_Avg_sd_act.SetValue(Grid.RowSpanProperty, 2);
-            Thres_Avg_sd_act.ValueChanged += Thres_Avg_sd_act_ValueChanged;
+            MainGrid.Children.Add(Spike_Activity_sd_act);
+            Spike_Activity_sd_act.SetValue(Grid.ColumnProperty, 81);
+            Spike_Activity_sd_act.SetValue(Grid.ColumnSpanProperty, 12);
+            Spike_Activity_sd_act.SetValue(Grid.RowProperty, 55);
+            Spike_Activity_sd_act.SetValue(Grid.RowSpanProperty, 2);
+            Spike_Activity_sd_act.ValueChanged += Spike_Activity_sd_act_ValueChanged;
 
-            Thres_Avg_tb_act = new TextBlock()
+            Spike_Activity_tb_act = new TextBlock()
             {
                 VerticalAlignment = VerticalAlignment.Stretch,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -2106,64 +2147,68 @@ namespace Channel_Select_Beta
                 FontWeight = FontWeights.Bold,
                 FontSize = 16
             };
-            MainGrid.Children.Add(Thres_Avg_tb_act);
-            Thres_Avg_tb_act.SetValue(Grid.ColumnProperty, 81);
-            Thres_Avg_tb_act.SetValue(Grid.ColumnSpanProperty, 12);
-            Thres_Avg_tb_act.SetValue(Grid.RowProperty, 57);
-            Thres_Avg_tb_act.SetValue(Grid.RowSpanProperty, 2);
+            MainGrid.Children.Add(Spike_Activity_tb_act);
+            Spike_Activity_tb_act.SetValue(Grid.ColumnProperty, 81);
+            Spike_Activity_tb_act.SetValue(Grid.ColumnSpanProperty, 12);
+            Spike_Activity_tb_act.SetValue(Grid.RowProperty, 57);
+            Spike_Activity_tb_act.SetValue(Grid.RowSpanProperty, 2);
             
 
             #endregion
         }
-
-        private void Thres_Avg_sd_act_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        private void Ref_Tar_Decolor()
         {
-            if (Thres_Avg_sd_act.Value == 0)
+            Targe_bt.BorderThickness = new Thickness(0,0,0,0);
+            Reference_bt.BorderThickness = new Thickness(0, 0, 0, 0);
+        }
+        private void Spike_Activity_sd_act_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            if (Spike_Activity_sd_act.Value == 0)
             {
-                Thres_Avg_tb_act.Text = "Deactivated";
-                Thres_Avg_bt_act.BorderBrush = red_bright_button_brush;
-                Thres_Avg_bt_act.Content = "Deactivated";
-                Thres_Avg_bt_act.Foreground = red_bright_button_brush;
+                Spike_Activity_tb_act.Text = "Deactivated";
+                Spike_Activity_bt_act.BorderBrush = red_bright_button_brush;
+                Spike_Activity_bt_act.Content = "Deactivated";
+                Spike_Activity_bt_act.Foreground = red_bright_button_brush;
             }
-            else if (Thres_Avg_sd_act.Value == 0.25)
+            else if (Spike_Activity_sd_act.Value == 0.25)
             {
-                Thres_Avg_tb_act.Text = "Low Importance";
-                Thres_Avg_bt_act.BorderBrush = green_bright_button_brush;
-                Thres_Avg_bt_act.Content = "Activated";
-                Thres_Avg_bt_act.Foreground = green_bright_button_brush;
+                Spike_Activity_tb_act.Text = "Low Importance";
+                Spike_Activity_bt_act.BorderBrush = green_bright_button_brush;
+                Spike_Activity_bt_act.Content = "Activated";
+                Spike_Activity_bt_act.Foreground = green_bright_button_brush;
             }
-            else if (Thres_Avg_sd_act.Value == 0.5)
+            else if (Spike_Activity_sd_act.Value == 0.5)
             {
-                Thres_Avg_tb_act.Text = "Normal Importance";
+                Spike_Activity_tb_act.Text = "Normal Importance";
 
             }
-            else if (Thres_Avg_sd_act.Value == 0.75)
+            else if (Spike_Activity_sd_act.Value == 0.75)
             {
-                Thres_Avg_tb_act.Text = "High Importance";
+                Spike_Activity_tb_act.Text = "High Importance";
 
             }
-            else if (Thres_Avg_sd_act.Value == 1)
+            else if (Spike_Activity_sd_act.Value == 1)
             {
-                Thres_Avg_tb_act.Text = "Max Importance";
+                Spike_Activity_tb_act.Text = "Max Importance";
 
             }
         }
 
-        private void Thres_Avg_bt_act_Click(object sender, RoutedEventArgs e)
+        private void Spike_Activity_bt_act_Click(object sender, RoutedEventArgs e)
         {
-            if (Thres_Avg_sd_act.Value == 0)
+            if (Spike_Activity_sd_act.Value == 0)
             {
-                Thres_Avg_sd_act.Value = 0.5;
-                Thres_Avg_bt_act.BorderBrush = green_bright_button_brush;
-                Thres_Avg_bt_act.Content = "Activated";
-                Thres_Avg_bt_act.Foreground = green_bright_button_brush;
+                Spike_Activity_sd_act.Value = 0.5;
+                Spike_Activity_bt_act.BorderBrush = green_bright_button_brush;
+                Spike_Activity_bt_act.Content = "Activated";
+                Spike_Activity_bt_act.Foreground = green_bright_button_brush;
             }
             else
             {
-                Thres_Avg_sd_act.Value = 0;
-                Thres_Avg_bt_act.BorderBrush = red_bright_button_brush;
-                Thres_Avg_bt_act.Content = "Deactivated";
-                Thres_Avg_bt_act.Foreground = red_bright_button_brush;
+                Spike_Activity_sd_act.Value = 0;
+                Spike_Activity_bt_act.BorderBrush = red_bright_button_brush;
+                Spike_Activity_bt_act.Content = "Deactivated";
+                Spike_Activity_bt_act.Foreground = red_bright_button_brush;
             }
         }
 
@@ -2373,6 +2418,8 @@ namespace Channel_Select_Beta
 
         private void Magnitude_Feature_Show()
         {
+            Reference_bt.Visibility = Visibility.Visible;
+
             Max_Amp_bt.Visibility = Visibility.Visible;
             Max_Amp_tb1.Visibility = Visibility.Visible;
             Max_Amp_tb2.Visibility = Visibility.Visible;
@@ -2401,17 +2448,19 @@ namespace Channel_Select_Beta
             SNR_sd_act.Visibility = Visibility.Visible;
             SNR_tb_act.Visibility = Visibility.Visible;
 
-            Thres_Avg_bt.Visibility = Visibility.Visible;
-            Thres_Avg_tb1.Visibility = Visibility.Visible;
-            Thres_Avg_tb2.Visibility = Visibility.Visible;
-            Thres_Avg_bt_act.Visibility = Visibility.Visible;
-            Thres_Avg_sd_act.Visibility = Visibility.Visible;
-            Thres_Avg_tb_act.Visibility = Visibility.Visible;
+            Spike_Activity_bt.Visibility = Visibility.Visible;
+            Spike_Activity_tb1.Visibility = Visibility.Visible;
+            Spike_Activity_tb2.Visibility = Visibility.Visible;
+            Spike_Activity_bt_act.Visibility = Visibility.Visible;
+            Spike_Activity_sd_act.Visibility = Visibility.Visible;
+            Spike_Activity_tb_act.Visibility = Visibility.Visible;
 
         }
 
         private void Magnitude_Feature_Hide()
         {
+            Reference_bt.Visibility = Visibility.Collapsed;
+
             Max_Amp_bt.Visibility = Visibility.Collapsed;
             Max_Amp_tb1.Visibility = Visibility.Collapsed;
             Max_Amp_tb2.Visibility = Visibility.Collapsed;
@@ -2440,12 +2489,12 @@ namespace Channel_Select_Beta
             SNR_sd_act.Visibility = Visibility.Collapsed;
             SNR_tb_act.Visibility = Visibility.Collapsed;
 
-            Thres_Avg_bt.Visibility = Visibility.Collapsed;
-            Thres_Avg_tb1.Visibility = Visibility.Collapsed;
-            Thres_Avg_tb2.Visibility = Visibility.Collapsed;
-            Thres_Avg_bt_act.Visibility = Visibility.Collapsed;
-            Thres_Avg_sd_act.Visibility = Visibility.Collapsed;
-            Thres_Avg_tb_act.Visibility = Visibility.Collapsed;
+            Spike_Activity_bt.Visibility = Visibility.Collapsed;
+            Spike_Activity_tb1.Visibility = Visibility.Collapsed;
+            Spike_Activity_tb2.Visibility = Visibility.Collapsed;
+            Spike_Activity_bt_act.Visibility = Visibility.Collapsed;
+            Spike_Activity_sd_act.Visibility = Visibility.Collapsed;
+            Spike_Activity_tb_act.Visibility = Visibility.Collapsed;
         }
         #endregion
 
@@ -2472,7 +2521,62 @@ namespace Channel_Select_Beta
             Suggestion_bt.SetValue(Grid.RowSpanProperty, 4);
             Suggestion_bt.Click += Suggestion_bt_Click;
         }
-        private int save_counter = 10;
+        private void Update_Info()
+        {
+            #region tb1
+            Max_Amp_tb1.Text = myplotter1.Input_Data_Point[maxi].ToString() + " uV";
+            Max_Amp_tb1.Foreground = ardu_brush;
+            Max_Amp_tb1.FontSize = 24;
+
+            //Thres_Avg_bt
+
+            //Ref_Aprox_SNR
+
+            SNR_tb1.Text = Ref_Aprox_SNR.ToString("F3");
+            SNR_tb1.Foreground = ardu_brush;
+            SNR_tb1.FontSize = 24;
+
+            Spike_Activity_tb1.Text = Zero_Crossing.Count.ToString();
+            Spike_Activity_tb1.Foreground = ardu_brush;
+            Spike_Activity_tb1.FontSize = 24;
+
+            Charge_Den_tb1.Text = info_avg.ToString("F3");
+            Charge_Den_tb1.Foreground = ardu_brush;
+            Charge_Den_tb1.FontSize = 24;
+
+            Charge_Tot_tb1.Text = info_Tcharge.ToString("E3");
+            Charge_Tot_tb1.Foreground = ardu_brush;
+            Charge_Tot_tb1.FontSize = 24;
+            //Min_Amp_tb1.Text = myplotter1.Input_Data_Point[mini].ToString();
+            //Min_Amp_tb1.Foreground = Teal_color;
+            #endregion
+
+            #region tb2
+            Max_Amp_tb2.Text = Read_Data_In[(int)Rank_Index[0]][T_maxi].ToString() + " uV";
+            Max_Amp_tb2.Foreground = ardu_brush;
+            Max_Amp_tb2.FontSize = 24;
+
+            //Thres_Avg_bt
+
+            //Ref_Aprox_SNR
+
+            SNR_tb2.Text = T_Ref_Aprox_SNR.ToString("F3");
+            SNR_tb2.Foreground = ardu_brush;
+            SNR_tb2.FontSize = 24;
+
+            Spike_Activity_tb2.Text = T_Zero_Crossing.Count.ToString();
+            Spike_Activity_tb2.Foreground = ardu_brush;
+            Spike_Activity_tb2.FontSize = 24;
+
+            Charge_Den_tb2.Text = T_info_avg.ToString("F3");
+            Charge_Den_tb2.Foreground = ardu_brush;
+            Charge_Den_tb2.FontSize = 24;
+
+            Charge_Tot_tb2.Text = T_info_Tcharge.ToString("E3");
+            Charge_Tot_tb2.Foreground = ardu_brush;
+            Charge_Tot_tb2.FontSize = 24;
+            #endregion
+        }
         private async void Suggestion_bt_Click(object sender, RoutedEventArgs e)
         {
             
@@ -2481,12 +2585,27 @@ namespace Channel_Select_Beta
                 await Save_Text(0);
                 //Refresh_Channel_Raw();
                 Streaming_Flag = false;
+                await Task.Delay(100);
                 Suggestion_bt.Content = "Resume";
-                save_counter++;
-            }else
+                myplotter1.Create_Plot(Plotter_max, Plotter_min);
+
+                Info_Cal(myplotter1.Input_Data_Point, new List<double>() { 1, 1, 1, 1, 1 }); // data, filter, thres
+                T_Info_Cal(Read_Data_In[(int)Rank_Index[0]], new List<double>() { 1, 1, 1, 1, 1 });
+                //myplotter1.Add_Plot(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, Light_blue_brush);
+                myplotter1.Add_Plot(Plotter_max, Plotter_min, Denoise_Signal, green_bright_button_brush);
+                //myplotter1.Add_Zcross(Zero_Crossing, myplotter1.Input_Data_Point.Count, Sky_blue_color);
+                Notice_tb.Text = Zero_Crossing.Count.ToString();
+                Notice_tb.Text += Threshold_sd.Value.ToString();
+                //myplotter1.Add_Point(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, new List<int>() { maxi } ,Violet_Red); 
+                //myplotter1.Add_Point(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, new List<int>() { mini }, Dodge_blue_brush);
+                //myplotter1.Add_PolyGon(Plotter_max, Plotter_min, Zero_Crossing[0], Zero_Crossing[1], myplotter1.Input_Data_Point, Teal_color);
+                Update_Info();
+
+            }
+            else
             {
                 Streaming_Flag = true;
-                Suggestion_bt.Content = "Action";
+                Suggestion_bt.Content = "Action";  
                 
             }
             
@@ -2999,10 +3118,12 @@ namespace Channel_Select_Beta
         private string Text_T = "";
 
         #endregion
-        #region others
+        #region feature extra
         private List<int> Zero_Crossing = new List<int>();
         private List<double> Denoise_Signal = new List<double>();
+        private double Ref_Aprox_SNR = 0;
         private double info_avg = 0;
+        private double info_Tcharge = 0;
         private int maxi = 0;
         private int mini = 0;
 
@@ -3019,36 +3140,39 @@ namespace Channel_Select_Beta
             double temp = 0;
             bool zflag = false;
             i = 0;
-            
-            while(i<x.Count)
+
+            while (i < x.Count)
             {
                 #region max min
                 info_avg += x[i];
-                if(x[i]>=max)
+                if (x[i] >= max)
                 {
                     max = x[i];
                     maxi = i;
-                }else if(x[i]<=min)
+                }
+                else if (x[i] <= min)
                 {
                     min = x[i];
                     mini = i;
                 }
                 #endregion
                 #region Zeros crossing
-                if (i==0)
-                {
-                    if(x[i]<thres)
-                    {
-                        zflag = false;
-                    }else
-                    {
-                        zflag = true;
-                    }
-                }else
+                if (i == 0)
                 {
                     if (x[i] < thres)
                     {
-                        if(zflag)
+                        zflag = false;
+                    }
+                    else
+                    {
+                        zflag = true;
+                    }
+                }
+                else
+                {
+                    if (x[i] < thres)
+                    {
+                        if (zflag)
                         {
                             Zero_Crossing.Add(i);
                             zflag = false;
@@ -3056,7 +3180,7 @@ namespace Channel_Select_Beta
                     }
                     else
                     {
-                        if(!zflag)
+                        if (!zflag)
                         {
                             Zero_Crossing.Add(i);
                             zflag = true;
@@ -3065,19 +3189,22 @@ namespace Channel_Select_Beta
                 }
                 #endregion
                 #region noise
-                if(i<y.Count)
+                if (i < y.Count)
                 {
                     Denoise_Signal.Add(0);
-                }else if(i < x.Count - y.Count)
+                }
+                else if (i < x.Count - y.Count)
                 {
                     ii = 0;
                     temp = 0;
                     while (ii < y.Count)
                     {
                         temp += x[i - y.Count / 2 + ii] * y[ii];
+
                         ii++;
                     }
                     Denoise_Signal.Add(temp / ii);
+                    Ref_Aprox_SNR += Math.Abs(x[i - y.Count / 2] - temp) / x[i - y.Count / 2];
                 }
                 else
                 {
@@ -3086,8 +3213,114 @@ namespace Channel_Select_Beta
                 #endregion
                 i++;
             }
+            info_Tcharge = info_avg;
+            info_avg /= x.Count;
+            Ref_Aprox_SNR /= x.Count;
 
         }
+
+
+        private List<int> T_Zero_Crossing = new List<int>();
+        private List<double> T_Denoise_Signal = new List<double>();
+        private double T_Ref_Aprox_SNR = 0;
+        private double T_info_avg = 0;
+        private double T_info_Tcharge = 0;
+        private int T_maxi = 0;
+        private int T_mini = 0;
+
+        private void T_Info_Cal(List<double> x, List<double> y)
+        {
+            double max = Plotter_min;
+            double min = Plotter_max;
+            List<double> result = new List<double>();
+            double thres = Threshold_sd.Value;
+            T_Denoise_Signal = new List<double>();
+            T_Zero_Crossing = new List<int>();
+            int i = 0;
+            int ii = 0;
+            double temp = 0;
+            bool zflag = false;
+            i = 0;
+
+            while (i < x.Count)
+            {
+                #region max min
+                T_info_avg += x[i];
+                if (x[i] >= max)
+                {
+                    max = x[i];
+                    T_maxi = i;
+                }
+                else if (x[i] <= min)
+                {
+                    min = x[i];
+                    T_mini = i;
+                }
+                #endregion
+                #region Zeros crossing
+                if (i == 0)
+                {
+                    if (x[i] < thres)
+                    {
+                        zflag = false;
+                    }
+                    else
+                    {
+                        zflag = true;
+                    }
+                }
+                else
+                {
+                    if (x[i] < thres)
+                    {
+                        if (zflag)
+                        {
+                            T_Zero_Crossing.Add(i);
+                            zflag = false;
+                        }
+                    }
+                    else
+                    {
+                        if (!zflag)
+                        {
+                            T_Zero_Crossing.Add(i);
+                            zflag = true;
+                        }
+                    }
+                }
+                #endregion
+                #region noise
+                if (i < y.Count)
+                {
+                    T_Denoise_Signal.Add(0);
+                }
+                else if (i < x.Count - y.Count)
+                {
+                    ii = 0;
+                    temp = 0;
+                    while (ii < y.Count)
+                    {
+                        temp += x[i - y.Count / 2 + ii] * y[ii];
+
+                        ii++;
+                    }
+                    T_Denoise_Signal.Add(temp / ii);
+                    T_Ref_Aprox_SNR += Math.Abs(x[i - y.Count / 2] - temp) / x[i - y.Count / 2];
+                }
+                else
+                {
+                    T_Denoise_Signal.Add(0.0);
+                }
+                #endregion
+                i++;
+            }
+            T_info_Tcharge = T_info_avg;
+            T_info_avg /= x.Count;
+            T_Ref_Aprox_SNR /= x.Count;
+
+        }
+        #endregion
+        #region others
 
 
         private async Task ShowDialog(string x, string y)
