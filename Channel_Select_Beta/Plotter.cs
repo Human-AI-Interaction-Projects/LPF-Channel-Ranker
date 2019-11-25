@@ -75,8 +75,7 @@ namespace Channel_Select_Beta
         private List<SolidColorBrush> All_Color = new List<SolidColorBrush>();
         #endregion
 
-        public List<double> Input_Data_Point = new List<double>();
-        public List<Polyline> Input_Data_Line = new List<Polyline>();
+        public double Threshold_Value = 0;
 
         public Canvas Plotter_canvas = new Canvas();
         private double Width = 0;
@@ -194,6 +193,8 @@ namespace Channel_Select_Beta
             public double y3;
             public double y4;
         }
+        private List<int> Box_x_min = new List<int>();
+        private List<int> Box_x_max = new List<int>();
 
         private void Create_Box(Polyline x)
         {
@@ -211,9 +212,99 @@ namespace Channel_Select_Beta
                     y4 = x.Points.Max(p => p.Y),
 
                 });
+                Box_x_min.Add(Input_Data_Point.Count * (int)(L_box[L_box.Count - 1].x1 / Width));
+                Box_x_max.Add(Input_Data_Point.Count * (int)(L_box[L_box.Count - 1].x2 / Width));
                 create_Box_Poly(L_box[L_box.Count - 1]);
+                create_Box_Button(L_box[L_box.Count - 1]);
+                Create_Box_Gon(L_box[L_box.Count - 1]);
             }
 
+        }
+        private List<Polygon> Box_gon = new List<Polygon>();
+        private void Create_Box_Gon(focus_Box b)
+        {
+            int i = 0;
+            double x = 0;
+            double y = 0;
+            int xmax = (int)(Input_Data_Point.Count * b.x2 / Width);
+            int xmin = (int)(Input_Data_Point.Count * b.x1 / Width);
+            bool flag = false;
+            bool crossflag = false;
+            #region Input Freq
+            Box_gon.Add(new Polygon()
+            {
+                Stroke = Light_blue_brush,
+                StrokeThickness = 1,
+                Fill = Violet_Red
+            }) ;
+
+            i = xmin;
+            while (i < (xmax+1))
+            {
+
+                if (Input_Data_Line[Input_Data_Line.Count - 1].Points[i].Y>b.y3)
+                {
+
+                    if (flag)
+                    {
+                        xmax = i;
+                        flag = !flag;
+                        break;
+                    }
+                    else
+                    {
+                        xmin = i;
+                    }
+
+                    crossflag = true;
+
+                }
+                else
+                {
+                    if(!flag)
+                    {
+                        flag = !flag;
+                    }
+                    
+                    Box_gon[Box_gon.Count - 1].Points.Add(Input_Data_Line[Input_Data_Line.Count - 1].Points[i]);
+
+                }
+                i++;
+            }
+            if (crossflag)
+            {
+                Box_gon[Box_gon.Count - 1].Points.Add(Box_gon[Box_gon.Count - 1].Points[0]);
+            }
+            else
+            {
+                Box_gon[Box_gon.Count - 1].Points.Add(new Point(b.x3, b.y3));
+                Box_gon[Box_gon.Count - 1].Points.Add(new Point(b.x4, b.y4));
+                Box_gon[Box_gon.Count - 1].Points.Add(new Point(b.x1, b.y1));
+            }
+            Plotter_canvas.Children.Add(Box_gon[Box_gon.Count - 1]);
+
+
+            #endregion
+        }
+
+
+        private List<Button> Box_bt = new List<Button>();
+        private void create_Box_Button(focus_Box x)
+        {
+            Box_bt.Add(new Button()
+            {
+                Width = x.x2 - x.x1,
+                Height = x.y3 - x.y1,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Background = Transparent_brush,
+                FontSize = 16,
+                Foreground = Light_blue_brush,
+                Content = (boxpoly.Count).ToString()
+            });
+            Plotter_canvas.Children.Add(Box_bt[Box_bt.Count-1]);
+            Canvas.SetLeft(Box_bt[Box_bt.Count - 1], x.x1);
+            Canvas.SetTop(Box_bt[Box_bt.Count - 1], x.y1);
         }
         private List<Polyline> boxpoly = new List<Polyline>();
         private void create_Box_Poly(focus_Box x)
@@ -230,18 +321,27 @@ namespace Channel_Select_Beta
             boxpoly[boxpoly.Count - 1].Points.Add(new Point(x.x4, x.y4));
             boxpoly[boxpoly.Count - 1].Points.Add(new Point(x.x1, x.y1));
         }
+        public List<double> Input_Data_Point = new List<double>();
+        public List<Polyline> Input_Data_Line = new List<Polyline>();
+
+        public List<double> Input_Freq_Point = new List<double>();
+        public List<Polyline> Input_Freq_Line = new List<Polyline>();
         public void Create_Plot(double ymax, double ymin)
         {
             double x = 0;
             double y = 0;
+            #region Input Data
             Remove_Input_Data_Line();
-            Input_Data_Line.Add(new Polyline(){
+            Remove_Input_Data_Ellipse();
+            Remove_Input_Data_PolyGon();
+            Input_Data_Line.Add(new Polyline()
+            {
                 Stroke = Light_blue_brush,
                 StrokeThickness = 1
             });
             int i = 0;
             i = 0;
-            while(i<Input_Data_Point.Count)
+            while (i < Input_Data_Point.Count)
             {
                 x = i * Width / Input_Data_Point.Count;
                 y = Height - (Input_Data_Point[i] - ymin) / (ymax - ymin) * Height;
@@ -249,8 +349,144 @@ namespace Channel_Select_Beta
                 i++;
             }
 
-            Plotter_canvas.Children.Add(Input_Data_Line[Input_Data_Line.Count-1]);
+            Plotter_canvas.Children.Add(Input_Data_Line[Input_Data_Line.Count - 1]);
+            #endregion
 
+        }
+
+        private List<Polygon> Input_Data_PolyGon = new List<Polygon>();
+        public void Add_PolyGon(double ymax, double ymin,int xmin, int xmax, List<double> data, SolidColorBrush b)
+        {
+            double x = 0;
+            double y = 0;
+            Input_Data_PolyGon.Add(new Polygon()
+            {
+                Stroke = b,
+                StrokeThickness = 1,
+                Fill = b
+            });
+            int i = 0;
+            i = xmin;
+            while (i < xmax)
+            {
+                x = i * Width / data.Count;
+                y = Height - (data[i] - ymin) / (ymax - ymin) * Height;
+                Input_Data_PolyGon[Input_Data_PolyGon.Count - 1].Points.Add(new Point(x, y));
+                i++;
+            }
+            Input_Data_PolyGon[Input_Data_PolyGon.Count - 1].Points.Add(Input_Data_PolyGon[Input_Data_PolyGon.Count - 1].Points[0]);
+            Plotter_canvas.Children.Add(Input_Data_PolyGon[Input_Data_PolyGon.Count - 1]);
+        }
+
+        private List<Ellipse> Input_Data_Ellipse = new List<Ellipse>();
+        private double Ellipse_Width = 20;
+        private double Ellipse_Height = 20;
+        public void Add_Point(double ymax, double ymin, List<double> data, List<int> ind, SolidColorBrush b)
+        {
+            double x = 0;
+            double y = 0;
+
+            int i = 0;
+            i = 0;
+            while (i < ind.Count)
+            {
+                Input_Data_Ellipse.Add(new Ellipse()
+                {
+                    Stroke = b,
+                    StrokeThickness = 1,
+                    Fill = b,
+                    Width = Ellipse_Width,
+                    Height = Ellipse_Height
+                });
+                x = ind[i] * Width / data.Count;
+                y = Height - (data[ind[i]] - ymin) / (ymax - ymin) * Height;
+                Input_Data_Ellipse[Input_Data_Ellipse.Count - 1].Margin = new Thickness(x-Ellipse_Width/2,y-Ellipse_Height/2,0,0);
+                i++;
+            }
+
+            Plotter_canvas.Children.Add(Input_Data_Ellipse[Input_Data_Ellipse.Count - 1]);
+        }
+        public void Add_Zcross(List<int> z, int c, SolidColorBrush b)
+        {
+            int i = 0;
+            double x = 0;
+            double y = 0;
+            i = 0;
+            while (i < z.Count)
+            {
+                Input_Data_Line.Add(new Polyline()
+                {
+                    Stroke = b,
+                    StrokeThickness = 1
+                });
+                x = z[i] * Width / c;
+                y = Height;
+                Input_Data_Line[Input_Data_Line.Count - 1].Points.Add(new Point(x, y));
+                y = 0;
+                Input_Data_Line[Input_Data_Line.Count - 1].Points.Add(new Point(x, y));
+                Plotter_canvas.Children.Add(Input_Data_Line[Input_Data_Line.Count - 1]);
+                i++;
+            }
+        }
+        public void Add_Plot(double ymax, double ymin, List<double> data, SolidColorBrush b)
+        {
+            double x = 0;
+            double y = 0;
+            Input_Data_Line.Add(new Polyline()
+            {
+                Stroke = b,
+                StrokeThickness = 1
+            });
+            int i = 0;
+            i = 0;
+            while (i < data.Count)
+            {
+                x = i * Width / data.Count;
+                y = Height - (data[i] - ymin) / (ymax - ymin) * Height;
+                Input_Data_Line[Input_Data_Line.Count - 1].Points.Add(new Point(x, y));
+                i++;
+            }
+
+            Plotter_canvas.Children.Add(Input_Data_Line[Input_Data_Line.Count - 1]);
+        }
+        public void Create_Freq_Ana(double fmax)
+        {
+            int i = 0;
+            double x = 0;
+            double y = 0;
+            #region Input Freq
+            Remove_Input_Freq_Line();
+            Input_Freq_Line.Add(new Polyline()
+            {
+                Stroke = Light_blue_brush,
+                StrokeThickness = 1
+            });
+
+            i = 0;
+            while (i < Input_Freq_Point.Count)
+            {
+                x = i * Width / Input_Freq_Point.Count;
+                y = Height - (Input_Freq_Point[i]) / fmax / 4 * Height;
+                Input_Freq_Line[Input_Freq_Line.Count - 1].Points.Add(new Point(x, y));
+                i++;
+            }
+
+            Plotter_canvas.Children.Add(Input_Freq_Line[Input_Freq_Line.Count - 1]);
+            #endregion
+        }
+        private void Remove_Input_Data_PolyGon()
+        {
+            int i = 0;
+            i = 0;
+            while (i < Input_Data_PolyGon.Count)
+            {
+                if (Plotter_canvas.Children.Contains(Input_Data_PolyGon[i]))
+                {
+                    Plotter_canvas.Children.Remove(Input_Data_PolyGon[i]);
+                }
+                i++;
+            }
+            Input_Data_PolyGon = new List<Polygon>();
         }
         private void Remove_Input_Data_Line()
         {
@@ -265,6 +501,54 @@ namespace Channel_Select_Beta
                 i++;
             }
             Input_Data_Line = new List<Polyline>();
+        }
+        private void Remove_Input_Data_Ellipse()
+        {
+            int i = 0;
+            i = 0;
+            while(i<Input_Data_Ellipse.Count)
+            {
+                if (Plotter_canvas.Children.Contains(Input_Data_Ellipse[i]))
+                {
+                    Plotter_canvas.Children.Remove(Input_Data_Ellipse[i]);
+                }
+                i++;
+            }
+            Input_Data_Ellipse = new List<Ellipse>();
+        }
+        private void Remove_Input_Freq_Line()
+        {
+            int i = 0;
+            i = 0;
+            while (i < Input_Freq_Line.Count)
+            {
+                if (Plotter_canvas.Children.Contains(Input_Freq_Line[i]))
+                {
+                    Plotter_canvas.Children.Remove(Input_Freq_Line[i]);
+                }
+                i++;
+            }
+            Input_Freq_Line = new List<Polyline>();
+        }
+        private Polyline Poly_Threshold = new Polyline();
+        public void Create_Threshold(double thres)
+        {
+            if(Plotter_canvas.Children.Contains(Poly_Threshold))
+            {
+                Plotter_canvas.Children.Remove(Poly_Threshold);
+            }
+            Poly_Threshold = new Polyline() {
+                Stroke = red_bright_button_brush,
+                StrokeThickness = 2
+            };
+            double y = 0;
+            double x = 0;
+            x = Width;
+            y = Height - thres * Height;
+            Poly_Threshold.Points.Add(new Point(x, y));
+            x = 0;
+            Poly_Threshold.Points.Add(new Point(x, y));
+            Plotter_canvas.Children.Add(Poly_Threshold);
         }
         private void Create_Cordinate()
         {
