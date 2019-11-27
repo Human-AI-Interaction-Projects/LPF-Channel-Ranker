@@ -115,6 +115,9 @@ namespace Channel_Select_Beta
                         StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
                         StorageFile sampleFile = await storageFolder.GetFileAsync("waveRank.txt");
                         Rank_Index = new List<double>(String_Data(await FileIO.ReadTextAsync(sampleFile)));
+                        T_Info_Cal(Read_Data_In[(int)Rank_Index[1]], new List<double>() { 1, 1, 1, 1, 1 });
+                        Update_Info();
+                        Plot_Cont_Update();
                     }
                     
                 }
@@ -148,6 +151,7 @@ namespace Channel_Select_Beta
             }
         }
         private List<double> Test_P = new List<double>();
+        private int basev = 0;
         private async void Run_Cont()
         {
             int i = 0;
@@ -230,7 +234,7 @@ namespace Channel_Select_Beta
                 });
                 i++;
             }
-            int basev = 0;
+
             int ib = 0;
             while (true)
             {
@@ -248,7 +252,7 @@ namespace Channel_Select_Beta
                         {
                             if(i==0)
                             {
-                                Test_P.Add(Read_Data_In[7][ib]);
+                                Test_P.Add(Read_Data_In[0][ib]);
                             }
                             x = (double)ii * 800 / Read_Data_In[i].Count - 400;
                             y = 100 - (Read_Data_In[(int)Rank_Index[i]][ib] + 100) / (700 - (-100)) * 100;
@@ -282,14 +286,74 @@ namespace Channel_Select_Beta
 
                     myplotter1.Input_Data_Point = new List<double>(Test_P);
                     myplotter1.Create_Plot(Plotter_max, Plotter_min);
+                    basev += 1;
+                    if (basev >= Read_Data_In[0].Count)
+                    {
+                        basev = 0;
+                    }
                 }
                 await Task.Delay(11);
-                basev += 1;
-                if (basev >= Read_Data_In[0].Count)
-                {
-                    basev = 0;
-                }
+                //basev += 1;
+                //if (basev >= Read_Data_In[0].Count)
+                //{
+                //    basev = 0;
+                //}
             }
+        }
+
+        private async void Plot_Cont_Update()
+        {
+            int i = 0;
+            int ib = 0;
+            int ii = 0;
+            double x = 0;
+            double y = 0;
+            i = 0;
+            ib = basev;
+
+
+            Test_P = new List<double>();
+            while (i < Total_Channel)
+            {
+
+                ii = 0;
+                while (ii < Read_Data_In[i].Count)
+                {
+                    if (i == 0)
+                    {
+                        Test_P.Add(Read_Data_In[0][ib]);
+                    }
+                    x = (double)ii * 800 / Read_Data_In[i].Count - 400;
+                    y = 100 - (Read_Data_In[(int)Rank_Index[i]][ib] + 100) / (700 - (-100)) * 100;
+                    Poco[i].Add(new Point(x, y));
+                    ii++;
+                    ib++;
+                    if (ib == Read_Data_In[0].Count)
+                    {
+                        ib = 0;
+                    }
+                }
+
+                i++;
+
+            }
+            i = 0;
+            while (i < Total_Channel)
+            {
+
+                scrollpolyline[i].Points = Poco[i];
+                i++;
+
+            }
+            Poco = new List<PointCollection>();
+            i = 0;
+            while (i < Total_Channel)
+            {
+                Poco.Add(new PointCollection());
+                i++;
+            }
+
+
         }
         private async Task Save_Text(int i)
         {
@@ -2180,16 +2244,25 @@ namespace Channel_Select_Beta
             else if (Spike_Activity_sd_act.Value == 0.5)
             {
                 Spike_Activity_tb_act.Text = "Normal Importance";
+                Spike_Activity_bt_act.BorderBrush = green_bright_button_brush;
+                Spike_Activity_bt_act.Content = "Activated";
+                Spike_Activity_bt_act.Foreground = green_bright_button_brush;
 
             }
             else if (Spike_Activity_sd_act.Value == 0.75)
             {
                 Spike_Activity_tb_act.Text = "High Importance";
+                Spike_Activity_bt_act.BorderBrush = green_bright_button_brush;
+                Spike_Activity_bt_act.Content = "Activated";
+                Spike_Activity_bt_act.Foreground = green_bright_button_brush;
 
             }
             else if (Spike_Activity_sd_act.Value == 1)
             {
                 Spike_Activity_tb_act.Text = "Max Importance";
+                Spike_Activity_bt_act.BorderBrush = green_bright_button_brush;
+                Spike_Activity_bt_act.Content = "Activated";
+                Spike_Activity_bt_act.Foreground = green_bright_button_brush;
 
             }
         }
@@ -2231,16 +2304,25 @@ namespace Channel_Select_Beta
             else if (SNR_sd_act.Value == 0.5)
             {
                 SNR_tb_act.Text = "Normal Importance";
+                SNR_bt_act.BorderBrush = green_bright_button_brush;
+                SNR_bt_act.Content = "Activated";
+                SNR_bt_act.Foreground = green_bright_button_brush;
 
             }
             else if (SNR_sd_act.Value == 0.75)
             {
                 SNR_tb_act.Text = "High Importance";
+                SNR_bt_act.BorderBrush = green_bright_button_brush;
+                SNR_bt_act.Content = "Activated";
+                SNR_bt_act.Foreground = green_bright_button_brush;
 
             }
             else if (SNR_sd_act.Value == 1)
             {
                 SNR_tb_act.Text = "Max Importance";
+                SNR_bt_act.BorderBrush = green_bright_button_brush;
+                SNR_bt_act.Content = "Activated";
+                SNR_bt_act.Foreground = green_bright_button_brush;
 
             }
         }
@@ -2282,16 +2364,25 @@ namespace Channel_Select_Beta
             else if (Charge_Tot_sd_act.Value == 0.5)
             {
                 Charge_Tot_tb_act.Text = "Normal Importance";
+                Charge_Tot_bt_act.BorderBrush = green_bright_button_brush;
+                Charge_Tot_bt_act.Content = "Activated";
+                Charge_Tot_bt_act.Foreground = green_bright_button_brush;
 
             }
             else if (Charge_Tot_sd_act.Value == 0.75)
             {
                 Charge_Tot_tb_act.Text = "High Importance";
+                Charge_Tot_bt_act.BorderBrush = green_bright_button_brush;
+                Charge_Tot_bt_act.Content = "Activated";
+                Charge_Tot_bt_act.Foreground = green_bright_button_brush;
 
             }
             else if (Charge_Tot_sd_act.Value == 1)
             {
                 Charge_Tot_tb_act.Text = "Max Importance";
+                Charge_Tot_bt_act.BorderBrush = green_bright_button_brush;
+                Charge_Tot_bt_act.Content = "Activated";
+                Charge_Tot_bt_act.Foreground = green_bright_button_brush;
 
             }
         }
@@ -2333,16 +2424,25 @@ namespace Channel_Select_Beta
             else if (Charge_Den_sd_act.Value == 0.5)
             {
                 Charge_Den_tb_act.Text = "Normal Importance";
+                Charge_Den_bt_act.BorderBrush = green_bright_button_brush;
+                Charge_Den_bt_act.Content = "Activated";
+                Charge_Den_bt_act.Foreground = green_bright_button_brush;
 
             }
             else if (Charge_Den_sd_act.Value == 0.75)
             {
                 Charge_Den_tb_act.Text = "High Importance";
+                Charge_Den_bt_act.BorderBrush = green_bright_button_brush;
+                Charge_Den_bt_act.Content = "Activated";
+                Charge_Den_bt_act.Foreground = green_bright_button_brush;
 
             }
             else if (Charge_Den_sd_act.Value == 1)
             {
                 Charge_Den_tb_act.Text = "Max Importance";
+                Charge_Den_bt_act.BorderBrush = green_bright_button_brush;
+                Charge_Den_bt_act.Content = "Activated";
+                Charge_Den_bt_act.Foreground = green_bright_button_brush;
 
             }
         }
@@ -2384,16 +2484,25 @@ namespace Channel_Select_Beta
             else if (Max_Amp_sd_act.Value == 0.5)
             {
                 Max_Amp_tb_act.Text = "Normal Importance";
+                Max_Amp_bt_act.BorderBrush = green_bright_button_brush;
+                Max_Amp_bt_act.Content = "Activated";
+                Max_Amp_bt_act.Foreground = green_bright_button_brush;
 
             }
             else if (Max_Amp_sd_act.Value == 0.75)
             {
                 Max_Amp_tb_act.Text = "High Importance";
+                Max_Amp_bt_act.BorderBrush = green_bright_button_brush;
+                Max_Amp_bt_act.Content = "Activated";
+                Max_Amp_bt_act.Foreground = green_bright_button_brush;
 
             }
             else if (Max_Amp_sd_act.Value == 1)
             {
                 Max_Amp_tb_act.Text = "Max Importance";
+                Max_Amp_bt_act.BorderBrush = green_bright_button_brush;
+                Max_Amp_bt_act.Content = "Activated";
+                Max_Amp_bt_act.Foreground = green_bright_button_brush;
 
             }
         }
@@ -2587,8 +2696,9 @@ namespace Channel_Select_Beta
                 Streaming_Flag = false;
                 await Task.Delay(100);
                 Suggestion_bt.Content = "Resume";
+                Write_Feature();
                 myplotter1.Create_Plot(Plotter_max, Plotter_min);
-
+                
                 Info_Cal(myplotter1.Input_Data_Point, new List<double>() { 1, 1, 1, 1, 1 }); // data, filter, thres
                 T_Info_Cal(Read_Data_In[(int)Rank_Index[0]], new List<double>() { 1, 1, 1, 1, 1 });
                 //myplotter1.Add_Plot(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, Light_blue_brush);
@@ -2599,7 +2709,7 @@ namespace Channel_Select_Beta
                 //myplotter1.Add_Point(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, new List<int>() { maxi } ,Violet_Red); 
                 //myplotter1.Add_Point(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, new List<int>() { mini }, Dodge_blue_brush);
                 //myplotter1.Add_PolyGon(Plotter_max, Plotter_min, Zero_Crossing[0], Zero_Crossing[1], myplotter1.Input_Data_Point, Teal_color);
-                Update_Info();
+                //Update_Info();
 
             }
             else
@@ -2610,7 +2720,46 @@ namespace Channel_Select_Beta
             }
             
         }
+        private async void Write_Feature()
+        {
+            int i = 0;
+            i = 0;
+            string sti = "";
+            string sti_test = "";
+            StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
+            StorageFile sampleFile;
+            while (i< Read_Data_In.Count)
+            {
+                T_Info_Cal(Read_Data_In[i], new List<double>() { 1, 1, 1, 1, 1 });
+                sti += Read_Data_In[i][T_maxi].ToString() + ",";
+                sti += Read_Data_In[i][T_mini].ToString() + ",";
+                sti += T_Zero_Crossing.Count.ToString() + ",";
+                sti += T_info_Tcharge.ToString() + ",";
+                sti += T_Ref_Aprox_SNR.ToString() + ",";
+                sti += T_info_avg.ToString() + ",";
+                if (i == 0)
+                {
+                    sti_test = sti;
+                    sti_test += "0";
+                    sampleFile = await storageFolder.CreateFileAsync(@"ExtractedFeatures\features_test" + ".txt", CreationCollisionOption.ReplaceExisting);
+                    await FileIO.WriteTextAsync(sampleFile, sti_test);
+                }
+                sti += (i+1).ToString() + "\r\n";
 
+                i++;
+            }
+            sampleFile = await storageFolder.CreateFileAsync(@"ExtractedFeatures\features_train.txt", CreationCollisionOption.ReplaceExisting);
+
+            await FileIO.WriteTextAsync(sampleFile, sti);
+
+            sampleFile = await storageFolder.CreateFileAsync(@"ExtractedFeatures\feature_Check_train.txt", CreationCollisionOption.ReplaceExisting);
+            await FileIO.WriteTextAsync(sampleFile, sti);
+            sti = "";
+            sti = "0," + Math.Abs(Max_Amp_sd_act.Value - 0.00).ToString() + "," + Math.Abs(Max_Amp_sd_act.Value-0.00).ToString() + "," + Math.Abs(Spike_Activity_sd_act.Value-0.00).ToString() + "," + Math.Abs(Charge_Tot_sd_act.Value-0.00).ToString() + "," + Math.Abs(SNR_sd_act.Value-0.00).ToString() + "," + Math.Abs(Charge_Den_sd_act.Value-0.00).ToString();
+              sampleFile = await storageFolder.CreateFileAsync("Header.txt", CreationCollisionOption.ReplaceExisting);
+            await FileIO.WriteTextAsync(sampleFile, sti);
+
+        }
         #endregion
         private List<double> Arduino_Input = new List<double>();
         private async void MainPage_loaded(object sender, RoutedEventArgs e)
