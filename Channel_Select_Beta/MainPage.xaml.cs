@@ -37,6 +37,7 @@ using System.Text;
 using Windows.UI.Text;
 using System.Diagnostics;
 using Windows.ApplicationModel;
+using System.Numerics;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -115,8 +116,8 @@ namespace Channel_Select_Beta
                         StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
                         StorageFile sampleFile = await storageFolder.GetFileAsync("waveRank.txt");
                         Rank_Index = new List<double>(String_Data(await FileIO.ReadTextAsync(sampleFile)));
-                        T_Info_Cal(Read_Data_In[(int)Rank_Index[1]], new List<double>() { 1, 1, 1, 1, 1 });
-                        Update_Info();
+                        T_Info_Cal(Read_Data_In[(int)Rank_Index[1]], new List<double>() { 1, 1, 1, 1, 1 }, (int)Rank_Index[1]);
+                        //Update_Info(0);
                         Plot_Cont_Update();
                     }
                     
@@ -133,11 +134,13 @@ namespace Channel_Select_Beta
         private List<PointCollection> Poco = new List<PointCollection>();
         private async Task Read_Pred_Data()
         {
+            L_extracted_features = new List<Extracted_Features>();
+            L_extracted_features.Add(new Extracted_Features());
             StorageFolder storageFolder = ApplicationData.Current.LocalFolder;
             int i = 0;
             i = 0;
             Read_Data_In = new List<List<double>>();
-            while (i < Total_Channel+2)
+            while (i < Total_Channel)
             {
                 scrollpolyline.Add(new Polyline()
                 {
@@ -148,17 +151,21 @@ namespace Channel_Select_Beta
                 StorageFile sampleFile = await storageFolder.GetFileAsync("Wave" + (10 + i).ToString() + ".txt");
                 Read_Data_In.Add(new List<double>(String_Data(await FileIO.ReadTextAsync(sampleFile))));
                 i++;
+
+                L_extracted_features.Add(new Extracted_Features());
             }
         }
         private List<double> Test_P = new List<double>();
+        private List<Button> Scrollbt = new List<Button>();
         private int basev = 0;
         private async void Run_Cont()
         {
             int i = 0;
             int ii = 0;
             scrollcanvas = new List<Canvas>();
-            
+            scrolltb = new List<TextBlock>();
             Poco = new List<PointCollection>();
+            Scrollbt = new List<Button>();
             double x = 0;
             double y = 0;
             i = 0;
@@ -180,7 +187,7 @@ namespace Channel_Select_Beta
                 while (ii < Read_Data_In[i].Count)
                 {
                     x = (double)ii * 800 / Read_Data_In[i].Count - 400;
-                    y = 100 - (Read_Data_In[(int)Rank_Index[i]][ii] + 100) / (700 - (-100)) * 100;
+                    y = 70 - (Read_Data_In[(int)Rank_Index[i]][ii] + 100) / (700 - (-100)) * 70;
                     Poco[i].Add(new Point(x, y));
                     ii++;
                 }
@@ -219,19 +226,43 @@ namespace Channel_Select_Beta
                 Poco[i].Add(Poco[i][Poco[i].Count - 1]);
                 Poco[i].RemoveAt(0);
                 scrollpolyline[i].Points = Poco[i];
+
+                scrolltb.Add(new TextBlock()
+                {
+                    VerticalAlignment = VerticalAlignment.Stretch,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Foreground = Sky_blue_color,
+                    FontSize = 20,
+                    FontWeight = FontWeights.ExtraBold,
+                    Width = 60,
+                    Height = 50,
+                    Text = "Ch: " + i.ToString()
+                });
+
                 scrollcanvas.Add(new Canvas()
                 {
-                    Height = 100,
+                    Height = 70,
                     Background = Default_back_black_color_brush
                 });
                 scrollcanvas[scrollcanvas.Count - 1].Children.Add(scrollpolyline[i]);
-                myPanel.Children.Add(new Button()
+                scrollcanvas[scrollcanvas.Count - 1].Children.Add(scrolltb[i]);
+                Canvas.SetLeft(scrolltb[i], 320);
+                Canvas.SetTop(scrolltb[i], -10);
+                Scrollbt.Add(new Button()
                 {
+                    BorderBrush = Light_blue_brush,
                     Content = scrollcanvas[i],
                     VerticalAlignment = VerticalAlignment.Stretch,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
-                    Height = 200
+                    Height = 140,
+                    BorderThickness = new Thickness(0, 0, 0, 1)
                 });
+                Scrollbt[i].Click += Scrollbt_Click;
+                Button_Chi[Scrollbt[i]] = i;
+                myPanel.Children.Add(Scrollbt[i]);
+
+
+
                 i++;
             }
 
@@ -284,8 +315,8 @@ namespace Channel_Select_Beta
                         i++;
                     }
 
-                    myplotter1.Input_Data_Point = new List<double>(Test_P);
-                    myplotter1.Create_Plot(Plotter_max, Plotter_min);
+                    //myplotter1.Input_Data_Point = new List<double>(Test_P);
+                    //myplotter1.Create_Plot(Plotter_max, Plotter_min);
                     basev += 1;
                     if (basev >= Read_Data_In[0].Count)
                     {
@@ -300,7 +331,30 @@ namespace Channel_Select_Beta
                 //}
             }
         }
+        private void Scrollbt_Decolor()
+        {
+            int i = 0;
+            i = 0;
+            while(i<Scrollbt.Count)
+            {
+                Scrollbt[i].BorderThickness = new Thickness(0, 0, 0, 1);
+                Scrollbt[i].BorderBrush = Light_blue_brush;
+                i++;
+            }
+        }
+        private void Scrollbt_Click(object sender, RoutedEventArgs e)
+        {
+            if(!Streaming_Flag)
+            {
+                Scrollbt_Decolor();
+                Button yoo = sender as Button;
+                yoo.BorderThickness = new Thickness(4, 4, 4, 4);
+                yoo.BorderBrush = green_bright_button_brush;
+                Update_Info(Button_Chi[yoo]);
+            }
+        }
 
+        private Dictionary<Button, int> Button_Chi = new Dictionary<Button, int>();
         private async void Plot_Cont_Update()
         {
             int i = 0;
@@ -315,7 +369,6 @@ namespace Channel_Select_Beta
             Test_P = new List<double>();
             while (i < Total_Channel)
             {
-
                 ii = 0;
                 while (ii < Read_Data_In[i].Count)
                 {
@@ -333,10 +386,11 @@ namespace Channel_Select_Beta
                         ib = 0;
                     }
                 }
-
+                scrolltb[i].Text = "Ch: " + ((int)Rank_Index[i]).ToString();
                 i++;
 
             }
+
             i = 0;
             while (i < Total_Channel)
             {
@@ -363,7 +417,7 @@ namespace Channel_Select_Beta
             await FileIO.WriteTextAsync(sampleFile, Data_String(myplotter1.Input_Data_Point));
 
         }
-        private int Total_Channel = 6;
+        private int Total_Channel = 8;
         private List<List<double>> Read_Data_In = new List<List<double>>();
         private List<Polyline> SPOLY = new List<Polyline>();
         private async void Work_Begin()
@@ -481,6 +535,7 @@ namespace Channel_Select_Beta
         private Plotter myplotter1;
         private List<Canvas> scrollcanvas = new List<Canvas>();
         private List<Polyline> scrollpolyline = new List<Polyline>();
+        private List<TextBlock> scrolltb = new List<TextBlock>();
 
         private Slider Threshold_sd = new Slider();
 
@@ -502,7 +557,11 @@ namespace Channel_Select_Beta
 
             await Read_Pred_Data();
 
-
+            Create_DFT_Paramter();
+            //while(true)
+            //{
+            //    await Task.Delay(1000);
+            //}
             Check_Date();
             Tab_Decolor();
             Feature_UI_Hide();
@@ -770,7 +829,7 @@ namespace Channel_Select_Beta
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 TextAlignment = TextAlignment.Center,
                 Foreground = white_button_brush,
-                Text = "0.7",
+                Text = "0",
                 FontSize = 16
             };
             MainGrid.Children.Add(Delta_B_tb);
@@ -842,8 +901,8 @@ namespace Channel_Select_Beta
                 BorderThickness = new Thickness(1, 1, 1, 1),
                 CornerRadius = new CornerRadius(2, 2, 2, 2),
                 BorderBrush = white_button_brush,
-                Value = 14,
-                Maximum = 20,
+                Value = 0,
+                Maximum = 1,
                 Minimum = 0
 
             };
@@ -876,7 +935,7 @@ namespace Channel_Select_Beta
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 TextAlignment = TextAlignment.Center,
                 Foreground = white_button_brush,
-                Text = "0.1",
+                Text = "0",
                 FontSize = 16
             };
             MainGrid.Children.Add(Theta_B_tb);
@@ -896,8 +955,8 @@ namespace Channel_Select_Beta
                 BorderThickness = new Thickness(1, 1, 1, 1),
                 CornerRadius = new CornerRadius(2, 2, 2, 2),
                 BorderBrush = white_button_brush,
-                Value = 2,
-                Maximum = 20,
+                Value = 0,
+                Maximum = 1,
                 Minimum = 0
 
             };
@@ -982,7 +1041,7 @@ namespace Channel_Select_Beta
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 TextAlignment = TextAlignment.Center,
                 Foreground = white_button_brush,
-                Text = "0.4",
+                Text = "0",
                 FontSize = 16
             };
             MainGrid.Children.Add(Alpha_B_tb);
@@ -1001,8 +1060,8 @@ namespace Channel_Select_Beta
                 BorderThickness = new Thickness(1, 1, 1, 1),
                 CornerRadius = new CornerRadius(2,2,2,2),
                 BorderBrush = white_button_brush,
-                Value = 8,
-                Maximum = 20,
+                Value = 0,
+                Maximum = 1,
                 Minimum = 0
                 
             };
@@ -1089,7 +1148,7 @@ namespace Channel_Select_Beta
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 TextAlignment = TextAlignment.Center,
                 Foreground = white_button_brush,
-                Text = "0.8",
+                Text = "0",
                 FontSize = 16
             };
             MainGrid.Children.Add(Beta_B_tb);
@@ -1109,8 +1168,8 @@ namespace Channel_Select_Beta
                 BorderThickness = new Thickness(1, 1, 1, 1),
                 CornerRadius = new CornerRadius(2, 2, 2, 2),
                 BorderBrush = white_button_brush,
-                Value = 16,
-                Maximum = 20,
+                Value = 0,
+                Maximum = 1,
                 Minimum = 0
 
             };
@@ -1197,7 +1256,7 @@ namespace Channel_Select_Beta
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 TextAlignment = TextAlignment.Center,
                 Foreground = white_button_brush,
-                Text = "0.5",
+                Text = "0",
                 FontSize = 16
             };
             MainGrid.Children.Add(Gamma_B_tb);
@@ -1217,8 +1276,8 @@ namespace Channel_Select_Beta
                 BorderThickness = new Thickness(1, 1, 1, 1),
                 CornerRadius = new CornerRadius(2, 2, 2, 2),
                 BorderBrush = white_button_brush,
-                Value = 10,
-                Maximum = 20,
+                Value = 0,
+                Maximum = 1,
                 Minimum = 0
 
             };
@@ -1626,6 +1685,27 @@ namespace Channel_Select_Beta
         private Slider Max_Amp_sd_act = new Slider();
         private TextBlock Max_Amp_tb_act = new TextBlock();
 
+        private Button Min_Amp_bt = new Button();
+        private TextBlock Min_Amp_tb1 = new TextBlock();
+        private TextBlock Min_Amp_tb2 = new TextBlock();
+        private Button Min_Amp_bt_act = new Button();
+        private Slider Min_Amp_sd_act = new Slider();
+        private TextBlock Min_Amp_tb_act = new TextBlock();
+
+        private Button Charge_Totp_bt = new Button();
+        private TextBlock Charge_Totp_tb1 = new TextBlock();
+        private TextBlock Charge_Totp_tb2 = new TextBlock();
+        private Button Charge_Totp_bt_act = new Button();
+        private Slider Charge_Totp_sd_act = new Slider();
+        private TextBlock Charge_Totp_tb_act = new TextBlock();
+
+        private Button Charge_Totn_bt = new Button();
+        private TextBlock Charge_Totn_tb1 = new TextBlock();
+        private TextBlock Charge_Totn_tb2 = new TextBlock();
+        private Button Charge_Totn_bt_act = new Button();
+        private Slider Charge_Totn_sd_act = new Slider();
+        private TextBlock Charge_Totn_tb_act = new TextBlock();
+
         private Button Charge_Den_bt = new Button();
         private TextBlock Charge_Den_tb1 = new TextBlock();
         private TextBlock Charge_Den_tb2 = new TextBlock();
@@ -1658,6 +1738,43 @@ namespace Channel_Select_Beta
         private Button Targe_bt = new Button();
         private void Magnitude_Feature_Setup()
         {
+            Targe_bt = new Button()
+            {
+                Content = "Target",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Foreground = Light_blue_brush,
+                Background = Default_back_black_color_brush,
+                VerticalContentAlignment = VerticalAlignment.Top,
+                FontSize = 20,
+                FontWeight = FontWeights.ExtraBold,
+                BorderBrush = Light_blue_brush,
+                BorderThickness = new Thickness(3, 3, 3, 3)
+            };
+            MainGrid.Children.Add(Targe_bt);
+            Targe_bt.SetValue(Grid.ColumnProperty, 64);
+            Targe_bt.SetValue(Grid.ColumnSpanProperty, 8);
+            Targe_bt.SetValue(Grid.RowProperty, 35);
+            Targe_bt.SetValue(Grid.RowSpanProperty, 3);
+
+            Reference_bt = new Button()
+            {
+                Content = "Reference",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Foreground = Light_blue_brush,
+                Background = Default_back_black_color_brush,
+                VerticalContentAlignment = VerticalAlignment.Top,
+                FontSize = 20,
+                FontWeight = FontWeights.ExtraBold,
+                BorderBrush = Light_blue_brush,
+                BorderThickness = new Thickness(3, 3, 3, 3)
+            };
+            MainGrid.Children.Add(Reference_bt);
+            Reference_bt.SetValue(Grid.ColumnProperty, 55);
+            Reference_bt.SetValue(Grid.ColumnSpanProperty, 8);
+            Reference_bt.SetValue(Grid.RowProperty, 35);
+            Reference_bt.SetValue(Grid.RowSpanProperty, 3);
             #region Max Amp
             Max_Amp_bt = new Button()
             {
@@ -1675,7 +1792,7 @@ namespace Channel_Select_Beta
             Max_Amp_bt.SetValue(Grid.ColumnSpanProperty, 10);
             Max_Amp_bt.SetValue(Grid.RowProperty, 39);
             Max_Amp_bt.SetValue(Grid.RowSpanProperty, 3);
-
+            Max_Amp_bt.Click += Max_Amp_bt_Click;
             Max_Amp_tb1 = new TextBlock()
             {
                 VerticalAlignment = VerticalAlignment.Stretch,
@@ -1780,7 +1897,7 @@ namespace Channel_Select_Beta
             Charge_Den_bt.SetValue(Grid.ColumnSpanProperty, 10);
             Charge_Den_bt.SetValue(Grid.RowProperty, 43);
             Charge_Den_bt.SetValue(Grid.RowSpanProperty, 3);
-
+            Charge_Den_bt.Click += Charge_Den_bt_Click;
             Charge_Den_tb1 = new TextBlock()
             {
                 VerticalAlignment = VerticalAlignment.Stretch,
@@ -1884,7 +2001,7 @@ namespace Channel_Select_Beta
             Charge_Tot_bt.SetValue(Grid.ColumnSpanProperty, 10);
             Charge_Tot_bt.SetValue(Grid.RowProperty, 47);
             Charge_Tot_bt.SetValue(Grid.RowSpanProperty, 3);
-
+            Charge_Tot_bt.Click += Charge_Tot_bt_Click;
             Charge_Tot_tb1 = new TextBlock()
             {
                 VerticalAlignment = VerticalAlignment.Stretch,
@@ -1988,7 +2105,7 @@ namespace Channel_Select_Beta
             SNR_bt.SetValue(Grid.ColumnSpanProperty, 10);
             SNR_bt.SetValue(Grid.RowProperty, 51);
             SNR_bt.SetValue(Grid.RowSpanProperty, 3);
-
+            SNR_bt.Click += SNR_bt_Click;
             SNR_tb1 = new TextBlock()
             {
                 VerticalAlignment = VerticalAlignment.Stretch,
@@ -2076,43 +2193,6 @@ namespace Channel_Select_Beta
 
             #endregion
             #region Thres_Avg
-            Targe_bt = new Button()
-            {
-                Content = "Target",
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch,
-                Foreground = Light_blue_brush,
-                Background = Default_back_black_color_brush,
-                VerticalContentAlignment = VerticalAlignment.Top,
-                FontSize = 20,
-                FontWeight = FontWeights.ExtraBold,
-                BorderBrush = Light_blue_brush,
-                BorderThickness = new Thickness(3,3,3,3)
-            };
-            MainGrid.Children.Add(Targe_bt);
-            Targe_bt.SetValue(Grid.ColumnProperty, 64);
-            Targe_bt.SetValue(Grid.ColumnSpanProperty, 8);
-            Targe_bt.SetValue(Grid.RowProperty, 35);
-            Targe_bt.SetValue(Grid.RowSpanProperty, 3);
-
-            Reference_bt = new Button()
-            {
-                Content = "Reference",
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch,
-                Foreground = Light_blue_brush,
-                Background = Default_back_black_color_brush,
-                VerticalContentAlignment = VerticalAlignment.Top,
-                FontSize = 20,
-                FontWeight = FontWeights.ExtraBold,
-                BorderBrush = Light_blue_brush,
-                BorderThickness = new Thickness(3, 3, 3, 3)
-            };
-            MainGrid.Children.Add(Reference_bt);
-            Reference_bt.SetValue(Grid.ColumnProperty, 55);
-            Reference_bt.SetValue(Grid.ColumnSpanProperty, 8);
-            Reference_bt.SetValue(Grid.RowProperty, 35);
-            Reference_bt.SetValue(Grid.RowSpanProperty, 3);
 
             Spike_Activity_bt = new Button()
             {
@@ -2130,7 +2210,7 @@ namespace Channel_Select_Beta
             Spike_Activity_bt.SetValue(Grid.ColumnSpanProperty, 10);
             Spike_Activity_bt.SetValue(Grid.RowProperty, 55);
             Spike_Activity_bt.SetValue(Grid.RowSpanProperty, 3);
-
+            Spike_Activity_bt.Click += Spike_Activity_bt_Click;
             Spike_Activity_tb1 = new TextBlock()
             {
                 VerticalAlignment = VerticalAlignment.Stretch,
@@ -2220,6 +2300,58 @@ namespace Channel_Select_Beta
 
             #endregion
         }
+        //myplotter1.Create_Plot(Plotter_max, Plotter_min);
+                //myplotter1.Add_Plot(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, Light_blue_brush);
+                //myplotter1.Add_Plot(Plotter_max, Plotter_min, Denoise_Signal, green_bright_button_brush);
+                //myplotter1.Add_Zcross(Zero_Crossing, myplotter1.Input_Data_Point.Count, Sky_blue_color);
+                //Notice_tb.Text = Zero_Crossing.Count.ToString();
+                //Notice_tb.Text += Threshold_sd.Value.ToString();
+                //myplotter1.Add_Point(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, new List<int>() { maxi } ,Violet_Red); 
+                //myplotter1.Add_Point(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, new List<int>() { mini }, Dodge_blue_brush);
+                //myplotter1.Add_PolyGon(Plotter_max, Plotter_min, Zero_Crossing[0], Zero_Crossing[1], myplotter1.Input_Data_Point, Teal_color);
+        private void Max_Amp_bt_Click(object sender, RoutedEventArgs e)
+        {
+            myplotter1.Create_Plot(Plotter_max, Plotter_min);
+            myplotter1.Add_Point(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, new List<int>() { maxi }, Violet_Red);
+            myplotter1.Add_Point(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, new List<int>() { mini }, Dodge_blue_brush);
+        }
+
+        private void Charge_Den_bt_Click(object sender, RoutedEventArgs e)
+        {
+            myplotter1.Create_Plot(Plotter_max, Plotter_min);
+            int i = 0;
+            i = 0;
+            while(i<Zero_Crossing.Count-1)
+            {
+                myplotter1.Add_PolyGon(Plotter_max, Plotter_min, Zero_Crossing[i], Zero_Crossing[i+1], myplotter1.Input_Data_Point, Teal_color);
+                i++;
+            }
+        }
+
+        private void Charge_Tot_bt_Click(object sender, RoutedEventArgs e)
+        {
+            myplotter1.Create_Plot(Plotter_max, Plotter_min);
+            int i = 0;
+            i = 0;
+            while (i < Zero_Crossing.Count - 1)
+            {
+                myplotter1.Add_PolyGon(Plotter_max, Plotter_min, Zero_Crossing[i], Zero_Crossing[i + 1], myplotter1.Input_Data_Point, Teal_color);
+                i++;
+            }
+        }
+
+        private void SNR_bt_Click(object sender, RoutedEventArgs e)
+        {
+            myplotter1.Create_Plot(Plotter_max, Plotter_min);
+            myplotter1.Add_Plot(Plotter_max, Plotter_min, Denoise_Signal, green_bright_button_brush);
+        }
+
+        private void Spike_Activity_bt_Click(object sender, RoutedEventArgs e)
+        {
+            myplotter1.Create_Plot(Plotter_max, Plotter_min);
+            myplotter1.Add_Zcross(Zero_Crossing, myplotter1.Input_Data_Point.Count, Sky_blue_color);
+        }
+
         private void Ref_Tar_Decolor()
         {
             Targe_bt.BorderThickness = new Thickness(0,0,0,0);
@@ -2528,6 +2660,7 @@ namespace Channel_Select_Beta
         private void Magnitude_Feature_Show()
         {
             Reference_bt.Visibility = Visibility.Visible;
+            Targe_bt.Visibility = Visibility.Visible;
 
             Max_Amp_bt.Visibility = Visibility.Visible;
             Max_Amp_tb1.Visibility = Visibility.Visible;
@@ -2569,6 +2702,7 @@ namespace Channel_Select_Beta
         private void Magnitude_Feature_Hide()
         {
             Reference_bt.Visibility = Visibility.Collapsed;
+            Targe_bt.Visibility = Visibility.Collapsed;
 
             Max_Amp_bt.Visibility = Visibility.Collapsed;
             Max_Amp_tb1.Visibility = Visibility.Collapsed;
@@ -2609,6 +2743,7 @@ namespace Channel_Select_Beta
 
         #region Support
         private Button Suggestion_bt = new Button();
+        private Button Recal_bt = new Button();
 
         private void Support_Setup()
         {
@@ -2629,8 +2764,41 @@ namespace Channel_Select_Beta
             Suggestion_bt.SetValue(Grid.RowProperty, 49);
             Suggestion_bt.SetValue(Grid.RowSpanProperty, 4);
             Suggestion_bt.Click += Suggestion_bt_Click;
+
+            Recal_bt = new Button()
+            {
+                Content = "Rank",
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Foreground = white_button_brush,
+                Background = Default_back_black_color_brush,
+                VerticalContentAlignment = VerticalAlignment.Top,
+                FontSize = 20,
+                FontWeight = FontWeights.ExtraBold
+            };
+            MainGrid.Children.Add(Recal_bt);
+            Recal_bt.SetValue(Grid.ColumnProperty, 16);
+            Recal_bt.SetValue(Grid.ColumnSpanProperty, 10);
+            Recal_bt.SetValue(Grid.RowProperty, 49);
+            Recal_bt.SetValue(Grid.RowSpanProperty, 4);
+            Recal_bt.Click += Recal_bt_Click;
         }
-        private void Update_Info()
+
+        private void Recal_bt_Click(object sender, RoutedEventArgs e)
+        {
+            Scrollbt_Decolor();
+            Scrollbt[0].BorderThickness = new Thickness(4, 4, 4, 4);
+            Scrollbt[0].BorderBrush = green_bright_button_brush;
+            Update_Weight_Matrix();
+            Loss_Ch_dic = new Dictionary<double, List<double>>();
+            Loss_L = new List<double>();
+            Streaming_Flag = false;
+            Cal_All_Ch();
+            myplotter1.Create_Plot(Plotter_max, Plotter_min);
+            Update_Channel_Rank();
+        }
+
+        private async void Update_Info(int ri)
         {
             #region tb1
             Max_Amp_tb1.Text = myplotter1.Input_Data_Point[maxi].ToString() + " uV";
@@ -2660,8 +2828,12 @@ namespace Channel_Select_Beta
             //Min_Amp_tb1.Foreground = Teal_color;
             #endregion
 
+            //Notice_tb.Text = L_extracted_features.Count.ToString() + "   " + Rank_Index.Count.ToString();
+            //await Task.Delay(100000);
+
             #region tb2
-            Max_Amp_tb2.Text = Read_Data_In[(int)Rank_Index[0]][T_maxi].ToString() + " uV";
+            //Max_Amp_tb2.Text = Read_Data_In[(int)Rank_Index[0]][T_maxi].ToString() + " uV";
+            Max_Amp_tb2.Text = L_extracted_features[(int)Rank_Index[ri]+1].T_max.ToString() + " uV";
             Max_Amp_tb2.Foreground = ardu_brush;
             Max_Amp_tb2.FontSize = 24;
 
@@ -2669,47 +2841,93 @@ namespace Channel_Select_Beta
 
             //Ref_Aprox_SNR
 
-            SNR_tb2.Text = T_Ref_Aprox_SNR.ToString("F3");
+            //SNR_tb2.Text = T_Ref_Aprox_SNR.ToString("F3");
+            SNR_tb2.Text = L_extracted_features[(int)Rank_Index[ri]+1].T_Ref_Aprox_SNR.ToString() + " uV";
             SNR_tb2.Foreground = ardu_brush;
             SNR_tb2.FontSize = 24;
 
-            Spike_Activity_tb2.Text = T_Zero_Crossing.Count.ToString();
+            Spike_Activity_tb2.Text = L_extracted_features[(int)Rank_Index[ri]+1].T_Zero_Crossing.Count.ToString();
             Spike_Activity_tb2.Foreground = ardu_brush;
             Spike_Activity_tb2.FontSize = 24;
 
-            Charge_Den_tb2.Text = T_info_avg.ToString("F3");
+            Charge_Den_tb2.Text = L_extracted_features[(int)Rank_Index[ri]+1].T_info_avg.ToString("F3");
             Charge_Den_tb2.Foreground = ardu_brush;
             Charge_Den_tb2.FontSize = 24;
 
-            Charge_Tot_tb2.Text = T_info_Tcharge.ToString("E3");
+            Charge_Tot_tb2.Text = L_extracted_features[(int)Rank_Index[ri]+1].T_info_Tcharge.ToString("E3");
             Charge_Tot_tb2.Foreground = ardu_brush;
             Charge_Tot_tb2.FontSize = 24;
+
+
+            Notice_tb.Text = L_extracted_features[(int)Rank_Index[ri] + 1].loss.ToString();
             #endregion
+
+            #region freq
+            Delta_B_pb.Value = L_extracted_features[0].band0_4;
+            Delta_B_tb.Text = L_extracted_features[0].band0_4.ToString("F4");
+
+            Theta_B_pb.Value = L_extracted_features[0].band4_8;
+            Theta_B_tb.Text = L_extracted_features[0].band4_8.ToString("F4");
+
+            Alpha_B_pb.Value = L_extracted_features[0].band8_16;
+            Alpha_B_tb.Text = L_extracted_features[0].band8_16.ToString("F4");
+
+            Beta_B_pb.Value = L_extracted_features[0].band16_32;
+            Beta_B_tb.Text = L_extracted_features[0].band16_32.ToString("F4");
+
+            Gamma_B_pb.Value = L_extracted_features[0].band32_;
+            Gamma_B_tb.Text = L_extracted_features[0].band32_.ToString("F4");
+
+            #endregion
+        }
+        private List<double> Weight_Matrix = new List<double>();
+        private void Update_Weight_Matrix()
+        {
+            Weight_Matrix = new List<double>();
+            Weight_Matrix.Add(Delta_B_sd_act.Value);
+            Weight_Matrix.Add(Theta_B_sd_act.Value);
+            Weight_Matrix.Add(Alpha_B_sd_act.Value);
+            Weight_Matrix.Add(Beta_B_sd_act.Value);
+            Weight_Matrix.Add(Gamma_B_sd_act.Value);
+
+            Weight_Matrix.Add(Max_Amp_sd_act.Value);
+            Weight_Matrix.Add(Charge_Den_sd_act.Value);
+            Weight_Matrix.Add(Charge_Tot_sd_act.Value);
+            Weight_Matrix.Add(SNR_sd_act.Value);
+            Weight_Matrix.Add(Spike_Activity_sd_act.Value);
+
         }
         private async void Suggestion_bt_Click(object sender, RoutedEventArgs e)
         {
             
             if(Streaming_Flag)
             {
-                await Save_Text(0);
+                //Button_Chi = new Dictionary<Button, int>();
+                Scrollbt_Decolor();
+                Scrollbt[0].BorderThickness = new Thickness(4, 4, 4, 4);
+                Scrollbt[0].BorderBrush = green_bright_button_brush;
+                Update_Weight_Matrix();
+                Loss_Ch_dic = new Dictionary<double, List<double>>();
+                Loss_L = new List<double>();
+                //await Save_Text(0);
                 //Refresh_Channel_Raw();
                 Streaming_Flag = false;
                 await Task.Delay(100);
                 Suggestion_bt.Content = "Resume";
-                Write_Feature();
+                //Write_Feature();
+                Cal_All_Ch();
                 myplotter1.Create_Plot(Plotter_max, Plotter_min);
-                
-                Info_Cal(myplotter1.Input_Data_Point, new List<double>() { 1, 1, 1, 1, 1 }); // data, filter, thres
-                T_Info_Cal(Read_Data_In[(int)Rank_Index[0]], new List<double>() { 1, 1, 1, 1, 1 });
                 //myplotter1.Add_Plot(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, Light_blue_brush);
-                myplotter1.Add_Plot(Plotter_max, Plotter_min, Denoise_Signal, green_bright_button_brush);
+                //myplotter1.Add_Plot(Plotter_max, Plotter_min, Denoise_Signal, green_bright_button_brush);
                 //myplotter1.Add_Zcross(Zero_Crossing, myplotter1.Input_Data_Point.Count, Sky_blue_color);
-                Notice_tb.Text = Zero_Crossing.Count.ToString();
-                Notice_tb.Text += Threshold_sd.Value.ToString();
+                //Notice_tb.Text = Zero_Crossing.Count.ToString();
+                //Notice_tb.Text += Threshold_sd.Value.ToString();
                 //myplotter1.Add_Point(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, new List<int>() { maxi } ,Violet_Red); 
                 //myplotter1.Add_Point(Plotter_max, Plotter_min, myplotter1.Input_Data_Point, new List<int>() { mini }, Dodge_blue_brush);
                 //myplotter1.Add_PolyGon(Plotter_max, Plotter_min, Zero_Crossing[0], Zero_Crossing[1], myplotter1.Input_Data_Point, Teal_color);
                 //Update_Info();
+                Update_Channel_Rank();
+
 
             }
             else
@@ -2719,6 +2937,18 @@ namespace Channel_Select_Beta
                 
             }
             
+        }
+        private void Cal_All_Ch()
+        {
+            int i = 0;
+            i = 0;
+            Info_Cal(myplotter1.Input_Data_Point, new List<double>() { 1, 1, 1, 1, 1 }); // data, filter, thres
+
+            while (i<Read_Data_In.Count)
+            {
+                T_Info_Cal(Read_Data_In[i], new List<double>() { 1, 1, 1, 1, 1 }, i+1);
+                i++;
+            }
         }
         private async void Write_Feature()
         {
@@ -2730,7 +2960,7 @@ namespace Channel_Select_Beta
             StorageFile sampleFile;
             while (i< Read_Data_In.Count)
             {
-                T_Info_Cal(Read_Data_In[i], new List<double>() { 1, 1, 1, 1, 1 });
+                T_Info_Cal(Read_Data_In[i], new List<double>() { 1, 1, 1, 1, 1 },i+1);
                 sti += Read_Data_In[i][T_maxi].ToString() + ",";
                 sti += Read_Data_In[i][T_mini].ToString() + ",";
                 sti += T_Zero_Crossing.Count.ToString() + ",";
@@ -2792,89 +3022,6 @@ namespace Channel_Select_Beta
             Notice_tb.SetValue(Grid.RowSpanProperty, 5);
             Notice_tb.Text = ApplicationData.Current.LocalFolder.Path;
             #endregion
-            //tgd = new List<double>() { 0.15774243, 0.69950381, 1.06226376, 0.44583132,  -0.31998660, -0.18351806, 0.13788809, 0.03892321, -0.04466375, 0.000783251152, 0.00675606236, -0.00152353381 };
-            //tgd = new List<double>() { -0.00152353381, -0.00675606236, 0.000783251152, 0.04466375, 0.03892321, -0.13788809, -0.18351806, 0.31998660, 0.44583132, -1.06226376, 0.69950381, -0.15774243 };
-
-            //#region Scroll
-            //i = 0;
-            //while(i<10)
-            //{
-            //    scrollpolyline.Add(new Polyline()
-            //    {
-            //        Stroke = Light_blue_brush,
-            //        StrokeThickness = 2
-            //    });
-            //    i++;
-            //}
-
-
-            //double x = 0;
-            //double y = 0;
-            //i = 0;
-            //while (i < tgd.Count)
-            //{
-            //    x = (double)i * 800 / tgd.Count - 400;
-            //    y = 100 - (tgd[i] + 20) / (20 - (-20)) * 100;
-            //    ii = 0;
-            //    while(ii<10)
-            //    {
-            //        scrollpolyline[ii].Points.Add(new Point(x, y));
-            //        ii++;
-            //    }
-
-            //    i++;
-            //}
-
-
-            //myPanel.AllowDrop = true;
-            //mysViewer = new ScrollViewer() { 
-            //    VerticalAlignment = VerticalAlignment.Stretch,
-            //    HorizontalAlignment = HorizontalAlignment.Stretch,
-            //    Background = Blue_color
-            //};
-            //mysViewer.SetValue(Grid.ColumnProperty, 54);
-            //mysViewer.SetValue(Grid.ColumnSpanProperty, 40);
-            //mysViewer.SetValue(Grid.RowProperty, 2);
-            //mysViewer.SetValue(Grid.RowSpanProperty, 30);
-            //mysViewer.AllowDrop = true;
-            //mysViewer.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
-            //MainGrid.Children.Add(mysViewer);
-
-            //myPanel = new StackPanel()
-            //{
-            //    HorizontalAlignment = HorizontalAlignment.Stretch,
-            //    VerticalAlignment = VerticalAlignment.Stretch,
-            //    Background = Default_back_black_color_brush,
-            //    BorderBrush = white_button_brush,
-            //    BorderThickness = new Thickness(1, 1, 1, 1),
-            //    CornerRadius = new CornerRadius(1,1,1,1)
-            //};
-
-            //mysViewer.Content = myPanel;
-
-            //i = 0;
-            //while (i < 10)
-            //{
-            //    scrollcanvas.Add(new Canvas()
-            //    {
-            //        Height = 100,
-            //        Background = Default_back_black_color_brush
-            //    });
-            //    scrollpolyline.Add(scrollpolyline[i]);
-            //    scrollcanvas[scrollcanvas.Count - 1].Children.Add(scrollpolyline[i]);
-            //    myPanel.Children.Add(new Button()
-            //    {
-            //        Content = scrollcanvas[i],
-            //        VerticalAlignment = VerticalAlignment.Stretch,
-            //        HorizontalAlignment = HorizontalAlignment.Stretch,
-            //        Height = 200
-            //    });
-            //    i++;
-            //}
-
-
-            //mysViewer.Content = myPanel;
-            //#endregion
             #region Main plotter
             myplotter1 = new Plotter(mainpage_info);
             double c1 = 8;
@@ -2907,8 +3054,6 @@ namespace Channel_Select_Beta
             ConnectToSerialPort();
             AdvReadByte(ReadCancellationTokenSource.Token);
             Thres_Update();
-            //Gen_Wavelet_Coeficient(0);
-            //Gen_Freq_Data();
 
         }
 
@@ -3151,20 +3296,20 @@ namespace Channel_Select_Beta
             if (x == 0x0D)
             {
                 
-                if(Watch_Counter==210)
-                {
-                    Watch_Counter = 0;
-                    stopWatch.Stop();
+                //if(Watch_Counter==210)
+                //{
+                //    Watch_Counter = 0;
+                //    stopWatch.Stop();
 
-                    TimeSpan ts = stopWatch.Elapsed;
-                    Notice_tb.Text = ts.ToString();
-                    stopWatch = new Stopwatch();
-                }
-                else if(Watch_Counter == 10)
-                {
-                    stopWatch.Start();
-                }
-                Watch_Counter++;
+                //    TimeSpan ts = stopWatch.Elapsed;
+                //    Notice_tb.Text = ts.ToString();
+                //    stopWatch = new Stopwatch();
+                //}
+                //else if(Watch_Counter == 10)
+                //{
+                //    stopWatch.Start();
+                //}
+                //Watch_Counter++;
                 Barrayi = 0;
                 //if (Print_Counter == 5)
                 //{
@@ -3187,15 +3332,14 @@ namespace Channel_Select_Beta
                 Total_Input_Count++;
                 if(Total_Input_Count%10==0 && Streaming_Flag)
                 {
-                    Total_Input_Count = 0;
+                    Total_Input_Count = 0;  
                     myplotter1.Input_Data_Point = new List<double>(Arduino_Input);
                     myplotter1.Create_Plot(ardumax + 15, ardumin - 15);
                 }
                 if(Arduino_Input.Count > 501)
                 {
-                    //myplotter1.Input_Data_Point = new List<double>(Arduino_Input);
+                    //myplotter1.Input_Data_Point = new List<double>(ArduFino_Input);
                     //myplotter1.Create_Plot(ardumax + 15, ardumin - 15);
-                    //Arduino_Input = new List<double>();
                     //Total_Input_Count = 0;
                     //ardumin = 50;
                     //ardumax = 50;
@@ -3276,7 +3420,89 @@ namespace Channel_Select_Beta
         private int maxi = 0;
         private int mini = 0;
 
-        private void Info_Cal(List<double> x, List<double> y)
+        private List<List<Complex>> DFT_Param = new List<List<Complex>>();
+        private void Create_DFT_Paramter()
+        {
+            DFT_Param = new List<List<Complex>>();
+            int i = 0;
+            int ii = 0;
+            Complex c = new Complex(0,0);
+            i = 0;
+            while (i<50)
+            {
+                DFT_Param.Add(new List<Complex>());
+                ii = 0;
+                while(ii<502)
+                {
+                    DFT_Param[i].Add(Complex.Exp( new Complex(Math.PI, 0) * new Complex(0,-1) * 2 /502 * i * ii));
+                    ii++;
+                }
+                i++;
+            }
+
+            List<double> testl = new List<double>();
+            //i = 0;
+            //while(i<500)
+            //{
+            //    testl.Add(Math.Sin(2 * Math.PI * i * 2/500) + Math.Sin(2 * Math.PI * i * 3 / 500) + Math.Sin(2 * Math.PI * i * 4 / 500) + Math.Sin(2 * Math.PI * i * 5 / 500));
+            //    i++;
+            //}
+            //DFT_CAL(testl);
+        }
+
+        private List<double> DFT_CAL(List<double> x)
+        {
+            List<double> result = new List<double>();
+            List<Complex> resulttemp = new List<Complex>();
+            Complex temp = 0;
+            int i = 0;
+            int ii = 0;
+            i = 0;
+            while(i< DFT_Param.Count)
+            {
+                ii = 0;
+                temp = 0;
+                
+                while(ii<DFT_Param[i].Count && ii<x.Count())
+                {
+                    temp += new Complex(x[ii],0) * DFT_Param[i][ii];
+                    ii++;
+                }
+                result.Add((int)temp.Magnitude);
+                i++;
+            }
+            ii = 0;
+            while(ii< x.Count())
+            {
+
+                i = 0;
+                while(i< DFT_Param.Count())
+                {
+                    if (ii == 0)
+                    {
+                        resulttemp.Add(0);
+                    }
+                    resulttemp[i] += new Complex(x[ii], 0) * DFT_Param[i][ii];
+                    i++;
+                }
+                ii++;
+            }
+            i = 0;
+            while(i<resulttemp.Count)
+            {
+                resulttemp[i] = resulttemp[i].Magnitude;
+                result[i] = (int)resulttemp[i].Magnitude;
+                i++;
+            }
+
+            Notice_tb.Text = "\r\n" + result[0].ToString() + ", " + result[1].ToString() + ", " + result[2].ToString() + ", " + result[3].ToString() + ", " + result[4].ToString() + ", " 
+                + result[5].ToString() + ", " + result[6].ToString() + ", " + result[7].ToString();
+
+            Notice_tb.Text += "\r\n" + string.Join(";", resulttemp);
+            return result;
+
+        }
+        private async void Info_Cal(List<double> x, List<double> y)
         {
             double max = Plotter_min;
             double min = Plotter_max;
@@ -3284,14 +3510,37 @@ namespace Channel_Select_Beta
             double thres = Threshold_sd.Value;
             Denoise_Signal = new List<double>();
             Zero_Crossing = new List<int>();
+            List<Complex> resulttemp = new List<Complex>();
+            List<double> resultdft = new List<double>();
+            int idft = 0;
             int i = 0;
             int ii = 0;
             double temp = 0;
             bool zflag = false;
             i = 0;
 
+
             while (i < x.Count)
             {
+
+
+                idft = 0;
+                while (idft < DFT_Param.Count())
+                {
+                    if (i == 0)
+                    {
+                        resulttemp.Add(0);
+                    }
+                    resulttemp[idft] += new Complex(x[i], 0) * DFT_Param[idft][i];
+                    idft++;
+                }
+                
+
+
+
+
+
+
                 #region max min
                 info_avg += x[i];
                 if (x[i] >= max)
@@ -3353,7 +3602,7 @@ namespace Channel_Select_Beta
                         ii++;
                     }
                     Denoise_Signal.Add(temp / ii);
-                    Ref_Aprox_SNR += Math.Abs(x[i - y.Count / 2] - temp) / x[i - y.Count / 2];
+                    Ref_Aprox_SNR += Math.Abs(x[i] - temp) / x[i];
                 }
                 else
                 {
@@ -3365,9 +3614,79 @@ namespace Channel_Select_Beta
             info_Tcharge = info_avg;
             info_avg /= x.Count;
             Ref_Aprox_SNR /= x.Count;
+            double total_dftp = 0;
+            double ba1 = 0;
+            double ba2 = 0;
+            double ba3 = 0;
+            double ba4 = 0;
+            double ba5 = 0;
+            i = 0;
+            while(i< resulttemp.Count)
+            {
+                resultdft.Add(resulttemp[i].Magnitude);
+                total_dftp += resulttemp[i].Magnitude;
+                if (i<=4)
+                {
+                    ba1 += resulttemp[i].Magnitude;
+                }
+                else if(i>4 && i<=8)
+                {
+                    ba2 += resulttemp[i].Magnitude;
+                }
+                else if (i > 8 && i <= 16)
+                {
+                    ba3 += resulttemp[i].Magnitude;
+                }
+                else if (i > 16 && i <= 32)
+                {
+                    ba4 += resulttemp[i].Magnitude;
+                }
+                else if (i > 32)
+                {
+                    ba5 += resulttemp[i].Magnitude;
+                }
+
+                i++;
+            }
+            L_extracted_features[0].Read_Value = new List<double>(x);
+            L_extracted_features[0].T_Zero_Crossing = new List<int>(Zero_Crossing);
+            L_extracted_features[0].T_Denoise_Signal = new List<double>(Denoise_Signal);
+            L_extracted_features[0].T_Ref_Aprox_SNR = Ref_Aprox_SNR;
+            L_extracted_features[0].T_info_avg = info_avg;
+            L_extracted_features[0].T_info_Tcharge = info_Tcharge;
+            L_extracted_features[0].T_maxi = maxi;
+            L_extracted_features[0].T_mini = mini;
+            L_extracted_features[0].T_max = max;
+            L_extracted_features[0].T_min = min;
+            L_extracted_features[0].band0_4 = ba1 / total_dftp;
+            L_extracted_features[0].band4_8 = ba2 / total_dftp;
+            L_extracted_features[0].band8_16 = ba3 / total_dftp;
+            L_extracted_features[0].band16_32 = ba4 / total_dftp;
+            L_extracted_features[0].band32_ = ba5 / total_dftp;
 
         }
 
+        private List<Extracted_Features> L_extracted_features = new List<Extracted_Features>();
+        private double Norm_Pow = 1;
+        private class Extracted_Features
+        {
+            public List<double> Read_Value;
+            public List<int> T_Zero_Crossing;
+            public List<double> T_Denoise_Signal;
+            public double T_Ref_Aprox_SNR;
+            public double T_info_avg;
+            public double T_info_Tcharge;
+            public int T_maxi;
+            public int T_mini;
+            public double T_max;
+            public double T_min;
+            public double band0_4;
+            public double band4_8;
+            public double band8_16;
+            public double band16_32;
+            public double band32_;
+            public double loss;
+        };
 
         private List<int> T_Zero_Crossing = new List<int>();
         private List<double> T_Denoise_Signal = new List<double>();
@@ -3377,8 +3696,13 @@ namespace Channel_Select_Beta
         private int T_maxi = 0;
         private int T_mini = 0;
 
-        private void T_Info_Cal(List<double> x, List<double> y)
+        private Dictionary<double, List<double>> Loss_Ch_dic = new Dictionary<double, List<double>>();
+        private List<double> Loss_L = new List<double>();
+        private async void T_Info_Cal(List<double> x, List<double> y, int chi)
         {
+
+
+
             double max = Plotter_min;
             double min = Plotter_max;
             List<double> result = new List<double>();
@@ -3389,10 +3713,28 @@ namespace Channel_Select_Beta
             int ii = 0;
             double temp = 0;
             bool zflag = false;
+
+            List<Complex> resulttemp = new List<Complex>();
+            List<double> resultdft = new List<double>();
+            int idft = 0;
+
+
+
             i = 0;
 
             while (i < x.Count)
             {
+                idft = 0;
+                while (idft < DFT_Param.Count())
+                {
+                    if (i == 0)
+                    {
+                        resulttemp.Add(0);
+                    }
+                    resulttemp[idft] += new Complex(x[i], 0) * DFT_Param[idft][i];
+                    idft++;
+                }
+
                 #region max min
                 T_info_avg += x[i];
                 if (x[i] >= max)
@@ -3467,6 +3809,116 @@ namespace Channel_Select_Beta
             T_info_avg /= x.Count;
             T_Ref_Aprox_SNR /= x.Count;
 
+            double total_dftp = 0;
+            double ba1 = 0;
+            double ba2 = 0;
+            double ba3 = 0;
+            double ba4 = 0;
+            double ba5 = 0;
+            i = 0;
+            while (i < resulttemp.Count)
+            {
+                resultdft.Add(resulttemp[i].Magnitude);
+                total_dftp += resulttemp[i].Magnitude;
+                if (i <= 4)
+                {
+                    ba1 += resulttemp[i].Magnitude;
+                }
+                else if (i > 4 && i <= 8)
+                {
+                    ba2 += resulttemp[i].Magnitude;
+                }
+                else if (i > 8 && i <= 16)
+                {
+                    ba3 += resulttemp[i].Magnitude;
+                }
+                else if (i > 16 && i <= 32)
+                {
+                    ba4 += resulttemp[i].Magnitude;
+                }
+                else if (i > 32)
+                {
+                    ba5 += resulttemp[i].Magnitude;
+                }
+
+                i++;
+            }
+
+
+            L_extracted_features[chi].Read_Value = new List<double>(x);
+            L_extracted_features[chi].T_Zero_Crossing = new List<int>(T_Zero_Crossing);
+            L_extracted_features[chi].T_Denoise_Signal = new List<double>(T_Denoise_Signal);
+            L_extracted_features[chi].T_Ref_Aprox_SNR = T_Ref_Aprox_SNR;
+            L_extracted_features[chi].T_info_avg = T_info_avg;
+            L_extracted_features[chi].T_info_Tcharge = T_info_Tcharge;
+            L_extracted_features[chi].T_maxi = T_maxi;
+            L_extracted_features[chi].T_mini = T_mini;
+            L_extracted_features[chi].T_max = max;
+            L_extracted_features[chi].T_min = min;
+            L_extracted_features[chi].band0_4 = ba1 / total_dftp;
+            L_extracted_features[chi].band4_8 = ba2 / total_dftp;
+            L_extracted_features[chi].band8_16 = ba3 / total_dftp;
+            L_extracted_features[chi].band16_32 = ba4 / total_dftp;
+            L_extracted_features[chi].band32_ = ba5 / total_dftp;
+
+            L_extracted_features[chi].loss = Weight_Matrix[0] * Math.Pow(Math.Abs((L_extracted_features[chi].band0_4 - L_extracted_features[0].band0_4) / L_extracted_features[0].band0_4), Norm_Pow)
+    + Weight_Matrix[1] * Math.Pow(Math.Abs((L_extracted_features[chi].band4_8 - L_extracted_features[0].band4_8) / L_extracted_features[0].band4_8), Norm_Pow)
+    + Weight_Matrix[2] * Math.Pow(Math.Abs((L_extracted_features[chi].band8_16 - L_extracted_features[0].band8_16) / L_extracted_features[0].band8_16), Norm_Pow)
+    + Weight_Matrix[3] * Math.Pow(Math.Abs((L_extracted_features[chi].band16_32 - L_extracted_features[0].band16_32) / L_extracted_features[0].band16_32), Norm_Pow)
+    + Weight_Matrix[4] * Math.Pow(Math.Abs((L_extracted_features[chi].band32_ - L_extracted_features[0].band32_) / L_extracted_features[0].band32_), Norm_Pow)
+    + Weight_Matrix[5] * Math.Pow(Math.Abs((L_extracted_features[chi].T_max - L_extracted_features[0].T_max) / L_extracted_features[0].T_max), Norm_Pow)
+    + Weight_Matrix[6] * Math.Pow(Math.Abs((L_extracted_features[chi].T_info_avg - L_extracted_features[0].T_info_avg) / L_extracted_features[0].T_info_avg), Norm_Pow)
+    + Weight_Matrix[7] * Math.Pow(Math.Abs((L_extracted_features[chi].T_info_Tcharge - L_extracted_features[0].T_info_Tcharge) / L_extracted_features[0].T_info_Tcharge), Norm_Pow)
+    + Weight_Matrix[8] * Math.Pow(Math.Abs((L_extracted_features[chi].T_Ref_Aprox_SNR - L_extracted_features[0].T_Ref_Aprox_SNR) / L_extracted_features[0].T_Ref_Aprox_SNR), Norm_Pow)
+    + Weight_Matrix[9] * Math.Pow(Math.Abs(((double)L_extracted_features[chi].T_Zero_Crossing.Count - L_extracted_features[0].T_Zero_Crossing.Count)), Norm_Pow);
+
+
+            if (Loss_Ch_dic.ContainsKey(L_extracted_features[chi].loss))
+            {
+                Loss_Ch_dic[L_extracted_features[chi].loss].Add(chi-1);
+            }
+            else
+            {
+                Loss_Ch_dic[L_extracted_features[chi].loss] = new List<double>();
+                Loss_Ch_dic[L_extracted_features[chi].loss].Add(chi-1);
+            }
+            Loss_L.Add(L_extracted_features[chi].loss);
+        }
+
+        private async void Update_Channel_Rank()
+        {
+            Loss_L.Sort();
+            Rank_Index = new List<double>();
+            int i = 0;
+            int ii = 0;
+
+            i = 0;
+            while(i< Loss_L.Count)
+            {
+                ii = 0;
+                while(ii< Loss_Ch_dic[Loss_L[i]].Count)
+                {
+                    //await ShowDialog(ii.ToString(), Loss_Ch_dic[Loss_L[i]].Count.ToString());
+                    if(!Rank_Index.Contains(Loss_Ch_dic[Loss_L[i]][ii]))
+                    {
+                        Rank_Index.Add(Loss_Ch_dic[Loss_L[i]][ii]);
+                    }
+
+                    ii++;
+                }
+
+                i++;
+            }
+            //i = 0;
+            //while(i<Rank_Index.Count)
+            //{
+                //Button_Chi[Scrollbt[i]] = (int)Rank_Index[i];
+            //   i++;
+            //}
+            //await ShowDialog(Rank_Index.Count.ToString(),"");
+            Update_Info(0);
+            
+            Plot_Cont_Update();
         }
         #endregion
         #region others
