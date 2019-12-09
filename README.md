@@ -21,7 +21,7 @@ Content:
 -  USB - A/B Connector
 -  ArduinoMega
 -  
-![image info](./pictures/image.png)
+![image info](./pictures/image.JPG)
 
 # Practice Hardware requirement:
 
