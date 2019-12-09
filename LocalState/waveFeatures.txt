@@ -1,0 +1,6 @@
+testWave,0
+kurtosis,2.500000e-01
+max,1
+mean,1
+median,1
+skewness,1
