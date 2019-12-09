@@ -18,19 +18,23 @@ Content:
 # Demo Hardware requirement:
 
 -  MyoWare Muscle Sensor
+![image info](./picture/sensor.jpg)
+-  ECG Electrodes
+![image info](./picture/pad.jpg)
 -  USB - A/B Connector
 -  ArduinoMega
--  
-![image info](./picture/image_test.jpg)
+![image info](./picture/ardu.jpg)
 
 # Practice Hardware requirement:
 
 1. UStim II device
 2. 256 Channel Omettic Connector
 3. Implanted Electrode array
-4. 
+
 # Hardware Setup
-- 
+- Arduino and EMG Sensor are connected to common ground
+- Signal pin from EMG Sensor is connected to A7 arduino adc pin
+- EMG Sensor's power pin is connected to 5v DC power source
 
 # Software Setup
 
