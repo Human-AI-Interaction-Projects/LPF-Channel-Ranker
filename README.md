@@ -39,7 +39,24 @@ Content:
 # Software Setup
 
 For First time Installation:
-- Move .Wave file into appPackage location
-- appPackage is located at
-- only 
-- 
+- Open Visual Studio 2019
+- Open .sln file and run Visual Studio in debugging mode
+- Change computer to developer mode
+
+
+After appPackage location is generated:
+- Copy and move LocalState folder under folder 16a2373a-1519-4dca-8c90-ac84a72b4cfd_kbtfgvzxh186t\
+- Application data is stored at 16a2373a-1519-4dca-8c90-ac84a72b4cfd_kbtfgvzxh186t\
+
+Arduino Software Setup:
+- Make sure to close PC Application
+- Connect Arduino to Arduino IDE through USB A/B connector
+- Select correct PORT
+- Select Arduino Mega for board spec
+- Select Arduino Gamma for firmware
+
+Final Step:
+- Close Arduino IDE
+- Run Visual Studio in release mode
+- Close Visual Studio
+- Locate Channel_Select App in Windows search and Open the App
