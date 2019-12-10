@@ -98,5 +98,5 @@
 # Reference
 | Plugin | README |
 | ------ | ------ |
-| myoWare User Guide | [https://cdn.sparkfun.com/datasheets/Sensors/Biometric/MyowareUserManualAT-04-001.pdf][PlDb] |
-| Arduino User Guide | [https://www.arduino.cc/en/Reference/DataSheets][PlDb] |
+| myoWare User Guide | [https://cdn.sparkfun.com/datasheets/Sensors/Biometric/MyowareUserManualAT-04-001.pdf] |
+| Arduino User Guide | [https://www.arduino.cc/en/Reference/DataSheets] |
