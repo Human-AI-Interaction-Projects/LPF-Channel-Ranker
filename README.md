@@ -62,8 +62,7 @@ Final Step:
 - Locate Channel_Select App in Windows search and Open the App
 
 # User Interface
-
-![](./picture/guide.mp4)
+![](./picture/Guide.mp4)
 
 
 Starting Page:
