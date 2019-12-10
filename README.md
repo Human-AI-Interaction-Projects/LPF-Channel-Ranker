@@ -60,3 +60,12 @@ Final Step:
 - Run Visual Studio in release mode
 - Close Visual Studio
 - Locate Channel_Select App in Windows search and Open the App
+
+# User Interface
+
+![](./picture/guide.mp4)
+
+
+Starting Page:
+
+Application:
