@@ -62,7 +62,7 @@ Final Step:
 - Locate Channel_Select App in Windows search and Open the App
 
 # User Interface
-[![](./picture/ardu.jpg)](https://youtu.be/QNZgJIwNKKI)
+[![](./picture/newgui.PNG)](https://youtu.be/QNZgJIwNKKI)
 
 
 Starting Page:
